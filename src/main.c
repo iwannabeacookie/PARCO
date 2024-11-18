@@ -3,7 +3,7 @@
 #include "../include/init_matrix.h"
 #include "../include/sequential.h"
 
-#define MATRIX_DIMENSION 16384
+#define MATRIX_DIMENSION 4096
 
 void print_matrix(float** matrix, int n) {
     for (int i = 0; i < n; i++) {
@@ -16,11 +16,13 @@ void print_matrix(float** matrix, int n) {
 
 int main(int argc, char *argv[])
 {
-    float** m = init_matrix_sequential(MATRIX_DIMENSION);
+    float** m = init_matrix_parallel(MATRIX_DIMENSION);
 
     // print_matrix(m, MATRIX_DIMENSION);
 
     is_symmetric(m, MATRIX_DIMENSION);
+
+    is_symmetric_implicit(m, MATRIX_DIMENSION);
 
     float ** t = transpose(m, MATRIX_DIMENSION);
 

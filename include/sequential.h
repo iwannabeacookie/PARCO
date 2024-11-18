@@ -5,6 +5,8 @@
 
 bool is_symmetric(float **matrix, int n);
 
+bool is_symmetric_implicit(float **matrix, int n);
+
 float** transpose(float **matrix, int n);
 
 float** transpose_implicit(float **matrix, int n);
