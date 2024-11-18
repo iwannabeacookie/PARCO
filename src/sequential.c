@@ -40,12 +40,18 @@ float** transpose(float **matrix, int n) {
 float** transpose_implicit(float **matrix, int n) {
     double start = omp_get_wtime();
 
+    float **result = malloc(n * sizeof(float*));
+
+    #pragma GCC ivdep
     for (int i = 0; i < n; i++) {
-        for (int j = 0; j < i; j+=4) {
-            matrix[i][j] = matrix[j][i];
-            matrix[i][j+1] = matrix[j+1][i];
-            matrix[i][j+2] = matrix[j+2][i];
-            matrix[i][j+3] = matrix[j+3][i];
+        result[i] = malloc(n * sizeof(float));
+    }
+
+    #pragma GCC ivdep
+    for (int i = 0; i < n; i++) {
+        #pragma GCC unroll 4
+        for (int j = 0; j < n; j++) {
+            result[i][j] = matrix[j][i];
         }
     }
 

@@ -1,6 +1,6 @@
 # Variables
 CC = gcc
-CFLAGS = -Iinclude -Wall -Wextra -g -fopenmp -O3 
+CFLAGS = -Iinclude -Wall -Wextra -g -fopenmp -O3 -fopt-info-vec-optimized
 SRC_DIR = src
 BUILD_DIR = build
 BIN_DIR = bin

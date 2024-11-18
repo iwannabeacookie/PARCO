@@ -3,7 +3,7 @@
 #include "../include/init_matrix.h"
 #include "../include/sequential.h"
 
-#define MATRIX_DIMENSION 10000
+#define MATRIX_DIMENSION 16384
 
 void print_matrix(float** matrix, int n) {
     for (int i = 0; i < n; i++) {
