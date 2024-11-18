@@ -83,5 +83,5 @@ float** transpose_implicit(float **matrix, int n) {
 
     printf("Sequentially computed the transpose using implicit parallelization in: %f\n", omp_get_wtime() - start);
 
-    return matrix;
+    return result;
 }
