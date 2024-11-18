@@ -31,6 +31,7 @@ void correct_transpose(float** m1, float** m2, int n) {
 
 int main(int argc, char *argv[])
 {
+    float** p = init_matrix_sequential(MATRIX_DIMENSION);
     float** m = init_matrix_parallel(MATRIX_DIMENSION);
 
     // print_matrix(m, MATRIX_DIMENSION);
