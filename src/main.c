@@ -1,33 +1,10 @@
 #include <omp.h>
-#include <stdio.h>
 #include "../include/init_matrix.h"
 #include "../include/sequential.h"
 #include "../include/parallel.h"
+#include "../include/utils.h"
 
 #define MATRIX_DIMENSION 4096
-
-void print_matrix(float** matrix, int n) {
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("%f ", matrix[i][j]);
-        }
-        printf("\n");
-    }
-}
-
-void correct_transpose(float** m1, float** m2, int n) {
-    int equal = 1;
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            equal = m1[i][j] == m2[i][j];
-            if (!equal) {
-                printf("Not correct\n");
-                return;
-            }
-        }
-    }
-    printf("Correct\n");
-}
 
 int main(int argc, char *argv[])
 {

@@ -5,7 +5,7 @@
 #include <omp.h>
 
 float** init_matrix_sequential(int n) {
-    float start = omp_get_wtime();
+    double start = omp_get_wtime();
     srand(time(NULL));
 
     float** matrix = (float**)malloc(n * sizeof(float*));
@@ -23,17 +23,23 @@ float** init_matrix_sequential(int n) {
 
 // Before optimizitations sequential approach was faster
 float** init_matrix_parallel(int n) {
-    float start = omp_get_wtime();
-    unsigned int seed = time(NULL);
+    double start = omp_get_wtime();
 
     float** matrix = (float**)malloc(n * sizeof(float*));
 
-    // Reduced overhead by using private seed
-    #pragma omp parallel for schedule(dynamic) private(seed)
-    for (int i = 0; i < n; i++) {
-        matrix[i] = (float*)malloc(n * sizeof(float));
-        for (int j = 0; j < n; j++) {
-            matrix[i][j] = ((float)(rand_r(&seed) % (int)10e6) / 1000);
+    // Turns out, using a private seed makes each thread produce the same randomized numbers (who would have thought?)
+    //
+    // Sharing the seed variable doesn't seem to affect the randomness
+    // UPD: it does :(
+    #pragma omp parallel
+    {
+        unsigned int seed = time(NULL) + omp_get_thread_num();
+        #pragma omp for schedule(dynamic)
+        for (int i = 0; i < n; i++) {
+            matrix[i] = (float*)malloc(n * sizeof(float));
+            for (int j = 0; j < n; j++) {
+                matrix[i][j] = ((float)(rand_r(&seed) % (int)10e6) / 1000);
+            }
         }
     }
 
