@@ -1,4 +1,5 @@
 #include <omp.h>
+#include <stdio.h>
 #include "../include/init_matrix.h"
 #include "../include/sequential.h"
 #include "../include/parallel.h"
@@ -8,17 +9,17 @@
 
 int main(int argc, char *argv[])
 {
+    printf("===== Matrix Generation =====\n");
     float** p = init_matrix_sequential(MATRIX_DIMENSION);
     float** m = init_matrix_parallel(MATRIX_DIMENSION);
-
     // print_matrix(m, MATRIX_DIMENSION);
 
+    printf("\n===== Symmetricity Checks =====\n");
     is_symmetric(m, MATRIX_DIMENSION);
-
     is_symmetric_implicit(m, MATRIX_DIMENSION);
-
     is_symmetric_omp(m, MATRIX_DIMENSION);
 
+    printf("\n===== Transpositions =====\n");
     float ** t = transpose(m, MATRIX_DIMENSION);
     // print_matrix(t, MATRIX_DIMENSION);
 
