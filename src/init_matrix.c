@@ -21,12 +21,14 @@ float** init_matrix_sequential(int n) {
     return matrix;
 }
 
+// Before optimizitations sequential approach was faster
 float** init_matrix_parallel(int n) {
     float start = omp_get_wtime();
     unsigned int seed = time(NULL);
 
     float** matrix = (float**)malloc(n * sizeof(float*));
 
+    // Reduced overhead by using private seed
     #pragma omp parallel for schedule(dynamic) private(seed)
     for (int i = 0; i < n; i++) {
         matrix[i] = (float*)malloc(n * sizeof(float));

@@ -1,7 +1,7 @@
-#include <stdbool.h>
-
 #ifndef SEQUENTIAL_H
 #define SEQUENTIAL_H
+
+#include <stdbool.h>
 
 bool is_symmetric(float **matrix, int n);
 
