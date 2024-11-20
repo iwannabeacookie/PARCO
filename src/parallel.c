@@ -1,5 +1,3 @@
-#define BLOCK_SIZE 16
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <omp.h>
@@ -12,7 +10,9 @@ bool is_symmetric_omp(float **matrix, int n) {
     #pragma omp parallel shared(is_symmetric) 
     {
         // Using reduction significantly improves performance
-        #pragma omp for collapse(2) reduction(&&:is_symmetric)
+        // #pragma omp for collapse(2) reduction(&&:is_symmetric)
+        // Had to get rid of the collapse clause because it is not fully supported with the older OMP versions on hpcc
+        #pragma omp for reduction(&&:is_symmetric)
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < i; j++) {
                 if (matrix[i][j] != matrix[j][i]) {
@@ -61,7 +61,7 @@ float** transpose_omp(float **matrix, int n) {
     return result;
 }
 
-float** transpose_omp_block_based(float **matrix, int n) {
+float** transpose_omp_block_based(float **matrix, int n, int block_size) {
     double start = omp_get_wtime();
 
     float **result = malloc(n * sizeof(float*));
@@ -72,10 +72,10 @@ float** transpose_omp_block_based(float **matrix, int n) {
     #pragma omp parallel
     {
         #pragma omp for collapse(2) schedule(dynamic)
-        for (int i = 0; i < n; i += BLOCK_SIZE) {
-            for (int j = 0; j < n; j += BLOCK_SIZE) {
-                for (int ii = i; ii < i + BLOCK_SIZE && ii < n; ii++) {
-                    for (int jj = j; jj < j + BLOCK_SIZE && jj < n; jj++) {
+        for (int i = 0; i < n; i += block_size) {
+            for (int j = 0; j < n; j += block_size) {
+                for (int ii = i; ii < i + block_size && ii < n; ii++) {
+                    for (int jj = j; jj < j + block_size && jj < n; jj++) {
                         result[ii][jj] = matrix[jj][ii];
                     }
                 }
@@ -83,7 +83,7 @@ float** transpose_omp_block_based(float **matrix, int n) {
         }
     }
 
-    printf("Computed the block-based transpose using OMP in: %f\n", omp_get_wtime() - start);
+    printf("Computed the block-based (size %d) transpose using OMP in: %f\n", block_size, omp_get_wtime() - start);
 
     return result;
 }

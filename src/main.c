@@ -31,9 +31,11 @@ int main(int argc, char *argv[])
     // print_matrix(o_t, MATRIX_DIMENSION);
     // correct_transpose(t, o_t, MATRIX_DIMENSION);
 
-    float ** b_t = transpose_omp_block_based(m, MATRIX_DIMENSION);
-    // print_matrix(b_t, MATRIX_DIMENSION);
-    // correct_transpose(t, b_t, MATRIX_DIMENSION);
+    for (int i = 1; i < 2048; i*=2) {
+        float ** b_t = transpose_omp_block_based(m, MATRIX_DIMENSION, i);
+        // print_matrix(b_t, MATRIX_DIMENSION);
+        // correct_transpose(t, b_t, MATRIX_DIMENSION);
+    }
 
     return 0;
 }
