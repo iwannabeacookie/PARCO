@@ -1,5 +1,9 @@
-#include "../include/utils.h"
 #include <stdio.h>
+#include <time.h>
+#include "../include/utils.h"
+#include "../include/sequential.h"
+#include "../include/parallel.h"
+#include "../include/config.h"
 
 void print_matrix(float** matrix, int n) {
     for (int i = 0; i < n; i++) {
@@ -44,4 +48,44 @@ void test_randomness(float** m1, float** m2, int n) {
         }
     }
     printf("Random\n");
+}
+
+double get_time_in_seconds() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    return ts.tv_sec + ts.tv_nsec / 1e9;
+}
+
+void benchmark_function(void (*func)(float**, int, double*), float** matrix, int n, const char* func_name) {
+    double total_time = 0.0;
+    for (int i = 0; i < NUM_RUNS; i++) {
+        double time;
+        func(matrix, n, &time);
+        total_time += time;
+    }
+    printf("%s average time: %f seconds\n", func_name, total_time / NUM_RUNS);
+}
+
+void is_symmetric_wrapper(float** matrix, int n, double* time) {
+    is_symmetric(matrix, n, time);
+}
+
+void is_symmetric_implicit_wrapper(float** matrix, int n, double* time) {
+    is_symmetric_implicit(matrix, n, time);
+}
+
+void is_symmetric_omp_wrapper(float** matrix, int n, double* time) {
+    is_symmetric_omp(matrix, n, time);
+}
+
+void transpose_wrapper(float** matrix, int n, double* time) {
+    transpose(matrix, n, time);
+}
+
+void transpose_omp_wrapper(float** matrix, int n, double* time) {
+    transpose_omp(matrix, n, time);
+}
+
+void transpose_omp_block_based_wrapper(float** matrix, int n, double* time) {
+    transpose_omp_block_based(matrix, n, 64, time); // Assuming block size of 64
 }

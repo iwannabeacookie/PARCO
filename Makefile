@@ -34,8 +34,8 @@ clean:
 all: $(TARGET)
 
 # Dependencies
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.c $(INCLUDE_DIR)/init_matrix.h $(INCLUDE_DIR)/sequential.h $(INCLUDE_DIR)/parallel.h $(INCLUDE_DIR)/utils.h
-$(BUILD_DIR)/init_matrix.o: $(SRC_DIR)/init_matrix.c $(INCLUDE_DIR)/init_matrix.h
-$(BUILD_DIR)/sequential.o: $(SRC_DIR)/sequential.c $(INCLUDE_DIR)/sequential.h
-$(BUILD_DIR)/parallel.o: $(SRC_DIR)/parallel.c $(INCLUDE_DIR)/parallel.h
-$(BUILD_DIR)/utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
+$(BUILD_DIR)/main.o: $(SRC_DIR)/main.c $(INCLUDE_DIR)/init_matrix.h $(INCLUDE_DIR)/sequential.h $(INCLUDE_DIR)/parallel.h $(INCLUDE_DIR)/utils.h $(INCLUDE_DIR)/config.h
+$(BUILD_DIR)/init_matrix.o: $(SRC_DIR)/init_matrix.c $(INCLUDE_DIR)/init_matrix.h $(INCLUDE_DIR)/config.h
+$(BUILD_DIR)/sequential.o: $(SRC_DIR)/sequential.c $(INCLUDE_DIR)/sequential.h $(INCLUDE_DIR)/config.h
+$(BUILD_DIR)/parallel.o: $(SRC_DIR)/parallel.c $(INCLUDE_DIR)/parallel.h $(INCLUDE_DIR)/config.h
+$(BUILD_DIR)/utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h $(INCLUDE_DIR)/config.h

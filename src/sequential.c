@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <omp.h>
 
-bool is_symmetric(float **matrix, int n) {
+bool is_symmetric(float **matrix, int n, double* time) {
     double start = omp_get_wtime();
 
     for (int i = 0; i < n; i++) {
@@ -22,7 +22,7 @@ bool is_symmetric(float **matrix, int n) {
     return true;
 }
 
-bool is_symmetric_implicit(float **matrix, int n) {
+bool is_symmetric_implicit(float **matrix, int n, double* time) {
     double start = omp_get_wtime();
 
     #pragma GCC unroll 4
@@ -43,7 +43,7 @@ bool is_symmetric_implicit(float **matrix, int n) {
     return true;
 }
 
-float** transpose(float **matrix, int n) {
+float** transpose(float **matrix, int n, double* time) {
     float **result = malloc(n * sizeof(float*));
 
     for (int i = 0; i < n; i++) {
@@ -63,7 +63,7 @@ float** transpose(float **matrix, int n) {
     return result;
 }
 
-float** transpose_implicit(float **matrix, int n) {
+float** transpose_implicit(float **matrix, int n, double* time) {
     float **result = malloc(n * sizeof(float*));
 
     #pragma GCC unroll 4

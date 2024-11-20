@@ -3,15 +3,12 @@
 #include <omp.h>
 #include <stdlib.h>
 
-bool is_symmetric_omp(float **matrix, int n) {
+bool is_symmetric_omp(float **matrix, int n, double* time) {
     double start = omp_get_wtime();
     bool is_symmetric = true;
 
     #pragma omp parallel shared(is_symmetric) 
     {
-        // Using reduction significantly improves performance
-        // #pragma omp for collapse(2) reduction(&&:is_symmetric)
-        // Had to get rid of the collapse clause because it is not fully supported with the older OMP versions on hpcc
         #pragma omp for reduction(&&:is_symmetric)
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < i; j++) {
@@ -25,21 +22,19 @@ bool is_symmetric_omp(float **matrix, int n) {
         }
     }
 
-    printf("Computed that the matrix is %ssymmetric using OMP in: %f\n", is_symmetric ? "" : "not ", omp_get_wtime() - start);
+    *time = omp_get_wtime() - start;
+    printf("Computed that the matrix is %ssymmetric using OMP in: %f\n", is_symmetric ? "" : "not ", *time);
 
     return is_symmetric;
 }
 
-float** transpose_omp(float **matrix, int n) {
+float** transpose_omp(float **matrix, int n, double* time) {
     double start;
 
     float **result = malloc(n * sizeof(float*));
 
     #pragma omp parallel
     {
-        // Adding static schedule improves performance sometimes, but adds a lot of variance to execution time
-        // Using dynamic schedule grants better performance and is more consistent
-        // Using guided schedule seems to have the greatest overall boost, but the consistency is even worse, than static
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < n; i++) {
             result[i] = malloc(n * sizeof(float));
@@ -50,9 +45,6 @@ float** transpose_omp(float **matrix, int n) {
             start = omp_get_wtime();
         }
 
-        // Imperically deduced that including a collapse clause is faster
-        // using schedule(dynamic) is slower than using schedule(static)
-        // using schedule(guided) is the fastest
         #pragma omp for collapse(2) schedule(guided)
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -61,12 +53,13 @@ float** transpose_omp(float **matrix, int n) {
         }
     }
 
-    printf("Computed the transpose using OMP in: %f\n", omp_get_wtime() - start);
+    *time = omp_get_wtime() - start;
+    printf("Computed the transpose using OMP in: %f\n", *time);
 
     return result;
 }
 
-float** transpose_omp_block_based(float **matrix, int n, int block_size) {
+float** transpose_omp_block_based(float **matrix, int n, int block_size, double* time) {
     double start;
 
     float **result = malloc(n * sizeof(float*));
@@ -93,7 +86,8 @@ float** transpose_omp_block_based(float **matrix, int n, int block_size) {
         }
     }
 
-    printf("Computed the block-based (size %d) transpose using OMP in: %f\n", block_size, omp_get_wtime() - start);
+    *time = omp_get_wtime() - start;
+    printf("Computed the block-based (size %d) transpose using OMP in: %f\n", block_size, *time);
 
     return result;
 }
