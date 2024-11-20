@@ -1,10 +1,11 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <omp.h>
 #include <stdlib.h>
+#include <time.h>
 
-bool is_symmetric_omp(float **matrix, int n, double* time) {
-    double start = omp_get_wtime();
+bool is_symmetric_omp(float **matrix, int n, long double* time) {
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     bool is_symmetric = true;
 
     #pragma omp parallel shared(is_symmetric) 
@@ -22,14 +23,15 @@ bool is_symmetric_omp(float **matrix, int n, double* time) {
         }
     }
 
-    *time = omp_get_wtime() - start;
-    printf("Computed that the matrix is %ssymmetric using OMP in: %f\n", is_symmetric ? "" : "not ", *time);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Computed that the matrix is %ssymmetric using OMP in: %Lf\n", is_symmetric ? "" : "not ", *time);
 
     return is_symmetric;
 }
 
-float** transpose_omp(float **matrix, int n, double* time) {
-    double start;
+float** transpose_omp(float **matrix, int n, long double* time) {
+    struct timespec start, end;
 
     float **result = malloc(n * sizeof(float*));
 
@@ -42,7 +44,7 @@ float** transpose_omp(float **matrix, int n, double* time) {
 
         #pragma omp single
         {
-            start = omp_get_wtime();
+            clock_gettime(CLOCK_MONOTONIC, &start);
         }
 
         #pragma omp for collapse(2) schedule(guided)
@@ -53,14 +55,15 @@ float** transpose_omp(float **matrix, int n, double* time) {
         }
     }
 
-    *time = omp_get_wtime() - start;
-    printf("Computed the transpose using OMP in: %f\n", *time);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Computed the transpose using OMP in: %Lf\n", *time);
 
     return result;
 }
 
-float** transpose_omp_block_based(float **matrix, int n, int block_size, double* time) {
-    double start;
+float** transpose_omp_block_based(float **matrix, int n, int block_size, long double* time) {
+    struct timespec start, end;
 
     float **result = malloc(n * sizeof(float*));
     for (int i = 0; i < n; i++) {
@@ -71,7 +74,7 @@ float** transpose_omp_block_based(float **matrix, int n, int block_size, double*
     {
         #pragma omp single
         {
-            start = omp_get_wtime();
+            clock_gettime(CLOCK_MONOTONIC, &start);
         }
 
         #pragma omp for collapse(2) schedule(dynamic)
@@ -86,8 +89,9 @@ float** transpose_omp_block_based(float **matrix, int n, int block_size, double*
         }
     }
 
-    *time = omp_get_wtime() - start;
-    printf("Computed the block-based (size %d) transpose using OMP in: %f\n", block_size, *time);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Computed the block-based (size %d) transpose using OMP in: %Lf\n", block_size, *time);
 
     return result;
 }

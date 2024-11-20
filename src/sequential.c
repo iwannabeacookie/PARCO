@@ -1,29 +1,35 @@
 #include "../include/sequential.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
+#include <time.h>
 
-bool is_symmetric(float **matrix, int n, double* time) {
-    double start = omp_get_wtime();
+bool is_symmetric(float **matrix, int n, long double* time) {
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     for (int i = 0; i < n; i++) {
         #pragma GCC unroll 4
         #pragma GCC ivdep
         for (int j = 0; j < i; j++) {
             if (matrix[i][j] != matrix[j][i]) {
-                printf("Sequentially computed that the matrix is not symmetric in: %f\n", omp_get_wtime() - start);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Sequentially computed that the matrix is not symmetric in: %Lf\n", *time);
                 return false;
             }
         }
     }
 
-    printf("Sequentially computed that the matrix is symmetric in: %f\n", omp_get_wtime() - start);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Sequentially computed that the matrix is symmetric in: %Lf\n", *time);
 
     return true;
 }
 
-bool is_symmetric_implicit(float **matrix, int n, double* time) {
-    double start = omp_get_wtime();
+bool is_symmetric_implicit(float **matrix, int n, long double* time) {
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     #pragma GCC unroll 4
     #pragma GCC ivdep
@@ -32,25 +38,30 @@ bool is_symmetric_implicit(float **matrix, int n, double* time) {
         #pragma GCC ivdep
         for (int j = 0; j < i; j++) {
             if (matrix[i][j] != matrix[j][i]) {
-                printf("Computed that the matrix is not symmetric with implicit parallelization in: %f\n", omp_get_wtime() - start);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Computed that the matrix is not symmetric with implicit parallelization in: %Lf\n", *time);
                 return false;
             }
         }
     }
 
-    printf("Computed that the matrix is symmetric with implicit parallelization in: %f\n", omp_get_wtime() - start);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Computed that the matrix is symmetric with implicit parallelization in: %Lf\n", *time);
 
     return true;
 }
 
-float** transpose(float **matrix, int n, double* time) {
+float** transpose(float **matrix, int n, long double* time) {
     float **result = malloc(n * sizeof(float*));
 
     for (int i = 0; i < n; i++) {
         result[i] = malloc(n * sizeof(float));
     }
 
-    double start = omp_get_wtime();
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -58,13 +69,14 @@ float** transpose(float **matrix, int n, double* time) {
         }
     }
 
-    *time = omp_get_wtime() - start;
-    printf("Sequentially computed the transpose in: %f\n", *time);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Sequentially computed the transpose in: %Lf\n", *time);
 
     return result;
 }
 
-float** transpose_implicit(float **matrix, int n, double* time) {
+float** transpose_implicit(float **matrix, int n, long double* time) {
     float **result = malloc(n * sizeof(float*));
 
     #pragma GCC unroll 4
@@ -73,7 +85,8 @@ float** transpose_implicit(float **matrix, int n, double* time) {
         result[i] = malloc(n * sizeof(float));
     }
 
-    double start = omp_get_wtime();
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     #pragma GCC unroll 4
     #pragma GCC ivdep
@@ -85,7 +98,9 @@ float** transpose_implicit(float **matrix, int n, double* time) {
         }
     }
 
-    printf("Sequentially computed the transpose using implicit parallelization in: %f\n", omp_get_wtime() - start);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Sequentially computed the transpose using implicit parallelization in: %Lf\n", *time);
 
     return result;
 }
