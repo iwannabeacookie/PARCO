@@ -1,5 +1,8 @@
 # Variables
 CC = gcc
+ifneq ($(shell which gcc-9.1.0),)
+CC = gcc-9.1.0
+endif
 CFLAGS = -Iinclude -Wall -Wextra -g -fopenmp -O3 -fopt-info-vec-optimized
 SRC_DIR = src
 BUILD_DIR = build
