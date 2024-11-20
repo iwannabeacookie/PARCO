@@ -1,6 +1,6 @@
 # Variables
 CC = gcc
-ifneq ($(shell which gcc-9.1.0),)
+ifneq ($(shell which gcc-9.1.0 > /dev/null 2>&1),)
 CC = gcc-9.1.0
 endif
 CFLAGS = -Iinclude -g -fopenmp -O3
@@ -37,7 +37,9 @@ all: $(TARGET)
 
 .PHONY: verbose
 verbose: CFLAGS += -Wall -Wextra -fopt-info-vec-optimized
-verbose: $(TARGET)
+verbose:
+	-which gcc-9.1.0
+	$(MAKE) -s $(TARGET)
 	
 # Dependencies
 $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c $(INCLUDE_DIR)/init_matrix.h $(INCLUDE_DIR)/sequential.h $(INCLUDE_DIR)/parallel.h $(INCLUDE_DIR)/utils.h $(INCLUDE_DIR)/config.h
