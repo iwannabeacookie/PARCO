@@ -87,5 +87,5 @@ void transpose_omp_wrapper(float** matrix, int n, double* time) {
 }
 
 void transpose_omp_block_based_wrapper(float** matrix, int n, double* time) {
-    transpose_omp_block_based(matrix, n, 64, time); // Assuming block size of 64
+    transpose_omp_block_based(matrix, n, BLOCK_SIZE, time); // Assuming block size of 64
 }

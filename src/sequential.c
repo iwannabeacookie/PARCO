@@ -58,7 +58,8 @@ float** transpose(float **matrix, int n, double* time) {
         }
     }
 
-    printf("Sequentially computed the transpose in: %f\n", omp_get_wtime() - start);
+    *time = omp_get_wtime() - start;
+    printf("Sequentially computed the transpose in: %f\n", *time);
 
     return result;
 }
