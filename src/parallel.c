@@ -31,7 +31,7 @@ bool is_symmetric_omp(float **matrix, int n) {
 }
 
 float** transpose_omp(float **matrix, int n) {
-    double start = omp_get_wtime();
+    double start;
 
     float **result = malloc(n * sizeof(float*));
 
@@ -43,6 +43,11 @@ float** transpose_omp(float **matrix, int n) {
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < n; i++) {
             result[i] = malloc(n * sizeof(float));
+        }
+
+        #pragma omp single
+        {
+            start = omp_get_wtime();
         }
 
         // Imperically deduced that including a collapse clause is faster
@@ -62,7 +67,7 @@ float** transpose_omp(float **matrix, int n) {
 }
 
 float** transpose_omp_block_based(float **matrix, int n, int block_size) {
-    double start = omp_get_wtime();
+    double start;
 
     float **result = malloc(n * sizeof(float*));
     for (int i = 0; i < n; i++) {
@@ -71,6 +76,11 @@ float** transpose_omp_block_based(float **matrix, int n, int block_size) {
 
     #pragma omp parallel
     {
+        #pragma omp single
+        {
+            start = omp_get_wtime();
+        }
+
         #pragma omp for collapse(2) schedule(dynamic)
         for (int i = 0; i < n; i += block_size) {
             for (int j = 0; j < n; j += block_size) {
