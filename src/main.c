@@ -5,9 +5,7 @@
 #include "../include/sequential.h"
 #include "../include/parallel.h"
 #include "../include/utils.h"
-
-#define MATRIX_DIMENSION 4096
-#define NUM_RUNS 10
+#include "../include/config.h"
 
 int main(int argc, char *argv[]) {
     printf("===== Matrix Generation =====\n");
