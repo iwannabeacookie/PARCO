@@ -12,7 +12,7 @@
 int main(int argc, char *argv[]) {
     init_config(argc, argv);
 
-    const Config* cfg = get_config();
+    Config* cfg = get_config();
 
     printf("===== Matrix Generation =====\n");
     float** p = init_matrix_sequential(cfg->MATRIX_DIMENSION);

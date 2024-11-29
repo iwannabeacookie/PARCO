@@ -1,4 +1,5 @@
 #include "../include/init_matrix.h"
+#include "../include/config.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -16,7 +17,16 @@ float** init_matrix_sequential(int n) {
         }
     }
 
-    printf("Initialized matrix sequentialy in: %f\n", omp_get_wtime() - start);
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Matrix generated sequentialy:\n");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                printf("%f ", matrix[i][j]);
+            }
+            printf("\n");
+        }
+        printf("Initialized matrix sequentialy in: %f\n", omp_get_wtime() - start);
+    }
 
     return matrix;
 }
@@ -43,7 +53,16 @@ float** init_matrix_parallel(int n) {
         }
     }
 
-    printf("Initialized matrix in parallel in: %f\n", omp_get_wtime() - start);
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Matrix generated in parallel:\n");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                printf("%f ", matrix[i][j]);
+            }
+            printf("\n");
+        }
+        printf("Initialized matrix in parallel in: %f\n", omp_get_wtime() - start);
+    }
 
     return matrix;
 }

@@ -21,12 +21,18 @@ void correct_transpose(float** m1, float** m2, int n) {
         for (int j = 0; j < n; j++) {
             equal = m1[i][j] == m2[i][j];
             if (!equal) {
-                printf("Not correct\n");
+
+                if (get_config()->VERBOSE_LEVEL > 0) {
+                    printf("Transpose is not correct\n");
+                }
                 return;
             }
         }
     }
-    printf("Correct\n");
+
+    if (get_config()->VERBOSE_LEVEL > 0) {
+        printf("Transpose is correct\n");
+    }
 }
 
 // Don't use that function on bigger inputs
@@ -58,14 +64,17 @@ double get_time_in_seconds() {
 }
 
 void benchmark_function(void (*func)(float**, int, long double*), float** matrix, int n, const char* func_name) {
-    const Config* cfg = get_config();
+    Config* cfg = get_config();
     double total_time = 0.0;
     for (int i = 0; i < cfg->NUM_RUNS; i++) {
         long double time;
         func(matrix, n, &time);
         total_time += time;
     }
-    printf("%s average time: %f seconds\n", func_name, total_time / cfg->NUM_RUNS);
+
+    if (cfg->VERBOSE_LEVEL > 0) {
+        printf("%s average time: %f seconds\n", func_name, total_time / cfg->NUM_RUNS);
+    }
 }
 
 void is_symmetric_sequential_wrapper(float** matrix, int n, long double* time) {
@@ -89,6 +98,5 @@ void transpose_omp_wrapper(float** matrix, int n, long double* time) {
 }
 
 void transpose_omp_block_based_wrapper(float** matrix, int n, long double* time) {
-    const Config* cfg = get_config();
-    transpose_omp_block_based(matrix, n, cfg->BLOCK_SIZE, time);
+    transpose_omp_block_based(matrix, n, get_config()->BLOCK_SIZE, time);
 }

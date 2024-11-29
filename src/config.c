@@ -5,12 +5,14 @@
 #include <string.h>
 
 // Static instance of Config
-static Config config;
+Config config;
 
 // Initializes the configuration, possibly from a file
 void init_config(int argc, char *argv[]) {
     // Default values
+    int CURR_RUN = 0;
     int MATRIX_DIMENSION = 1024;
+    int VERBOSE_LEVEL = 0;
     int BLOCK_SIZE = 4;
     int NUM_RUNS = 1; 
     int BENCHMARK_SEQUENTIAL = 0; 
@@ -49,6 +51,23 @@ void init_config(int argc, char *argv[]) {
             }
             else{
                 fprintf(stderr, "%s", "Error: --matrix-dimension flag requires an argument\n");
+                exit(1);
+            }
+        }
+
+        // Set the verbose level
+        else if (strcmp(argv[i], "--verbose") == 0){
+            if (i + 1 < argc){
+                int verbose_level = atoi(argv[i + 1]);
+                if (verbose_level < 0 || verbose_level > 2){
+                    fprintf(stderr, "%s", "Error: Verbose level must be between 0 and 2\n");
+                    exit(1);
+                }
+                VERBOSE_LEVEL = verbose_level;
+                i++;
+            }
+            else{
+                fprintf(stderr, "%s", "Error: --verbose flag requires an argument\n");
                 exit(1);
             }
         }
@@ -122,7 +141,10 @@ void init_config(int argc, char *argv[]) {
         }
     }
 
+    // Set the configuration
+    config.CURR_RUN = CURR_RUN;
     config.MATRIX_DIMENSION = MATRIX_DIMENSION;
+    config.VERBOSE_LEVEL = VERBOSE_LEVEL;
     config.BLOCK_SIZE = BLOCK_SIZE;
     config.NUM_RUNS = NUM_RUNS;
     config.BENCHMARK_SEQUENTIAL = BENCHMARK_SEQUENTIAL;
@@ -131,6 +153,6 @@ void init_config(int argc, char *argv[]) {
     config.OMP_THREADS = OMP_THREADS;
 }
 
-const Config* get_config() {
+Config* get_config() {
     return &config;
 }

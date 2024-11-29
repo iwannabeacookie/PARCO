@@ -1,4 +1,5 @@
 #include "../include/implicit_parallel.h"
+#include "../include/config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -17,7 +18,11 @@ bool is_symmetric_implicit(float **matrix, int n, long double* time) {
             if (matrix[i][j] != matrix[j][i]) {
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-                printf("Computed that the matrix is not symmetric with implicit parallelization in: %Lf\n", *time);
+                
+                if (get_config()->VERBOSE_LEVEL > 1) {
+                    printf("Computed that the matrix is not symmetric with implicit parallelization in: %Lf\n", *time);
+                }
+
                 return false;
             }
         }
@@ -25,7 +30,10 @@ bool is_symmetric_implicit(float **matrix, int n, long double* time) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Computed that the matrix is symmetric with implicit parallelization in: %Lf\n", *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed that the matrix is symmetric with implicit parallelization in: %Lf\n", *time);
+    }
 
     return true;
 }
@@ -54,7 +62,10 @@ float** transpose_implicit(float **matrix, int n, long double* time) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Sequentially computed the transpose using implicit parallelization in: %Lf\n", *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed the transpose with implicit parallelization in: %Lf\n", *time);
+    }
 
     return result;
 }

@@ -1,3 +1,4 @@
+#include "../include/config.h"
 #include "../include/sequential.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,11 @@ bool is_symmetric_sequential(float **matrix, int n, long double* time) {
             if (matrix[i][j] != matrix[j][i]) {
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-                printf("Sequentially computed that the matrix is not symmetric in: %Lf\n", *time);
+
+                if (get_config()->VERBOSE_LEVEL > 1) {
+                    printf("Sequentially computed that the matrix is not symmetric in: %Lf\n", *time);
+                }
+
                 return false;
             }
         }
@@ -22,7 +27,10 @@ bool is_symmetric_sequential(float **matrix, int n, long double* time) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Sequentially computed that the matrix is symmetric in: %Lf\n", *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Sequentially computed that the matrix is symmetric in: %Lf\n", *time);
+    }
 
     return true;
 }
@@ -45,7 +53,10 @@ float** transpose_sequential(float **matrix, int n, long double* time) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Sequentially computed the transpose in: %Lf\n", *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Sequentially computed the transpose in: %Lf\n", *time);
+    }
 
     return result;
 }

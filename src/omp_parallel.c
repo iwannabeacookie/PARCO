@@ -1,3 +1,4 @@
+#include "../include/config.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +26,10 @@ bool is_symmetric_omp(float **matrix, int n, long double* time) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Computed that the matrix is %ssymmetric using OMP in: %Lf\n", is_symmetric ? "" : "not ", *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed that the matrix is %ssymmetric using OMP in: %Lf\n", is_symmetric ? "" : "not ", *time);
+    }
 
     return is_symmetric;
 }
@@ -57,7 +61,10 @@ float** transpose_omp(float **matrix, int n, long double* time) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Computed the transpose using OMP in: %Lf\n", *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed the transpose using OMP in: %Lf\n", *time);
+    }
 
     return result;
 }
@@ -91,7 +98,10 @@ float** transpose_omp_block_based(float **matrix, int n, int block_size, long do
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Computed the block-based (size %d) transpose using OMP in: %Lf\n", block_size, *time);
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed the block-based (size %d) transpose using OMP in: %Lf\n", block_size, *time);
+    }
 
     return result;
 }

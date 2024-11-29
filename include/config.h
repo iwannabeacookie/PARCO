@@ -2,7 +2,9 @@
 #define CONFIG_H
 
 typedef struct {
+    int CURR_RUN;
     int MATRIX_DIMENSION;
+    int VERBOSE_LEVEL;
     int BLOCK_SIZE;
     int NUM_RUNS;
     int BENCHMARK_SEQUENTIAL;
@@ -15,6 +17,6 @@ typedef struct {
 void init_config(int argc, char *argv[]);
 
 // Function to retrieve the configuration
-const Config* get_config();
+Config* get_config();
 
 #endif // !CONFIG_H
