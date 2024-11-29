@@ -58,13 +58,14 @@ double get_time_in_seconds() {
 }
 
 void benchmark_function(void (*func)(float**, int, long double*), float** matrix, int n, const char* func_name) {
+    const Config* cfg = get_config();
     double total_time = 0.0;
-    for (int i = 0; i < NUM_RUNS; i++) {
+    for (int i = 0; i < cfg->NUM_RUNS; i++) {
         long double time;
         func(matrix, n, &time);
         total_time += time;
     }
-    printf("%s average time: %f seconds\n", func_name, total_time / NUM_RUNS);
+    printf("%s average time: %f seconds\n", func_name, total_time / cfg->NUM_RUNS);
 }
 
 void is_symmetric_sequential_wrapper(float** matrix, int n, long double* time) {
@@ -88,5 +89,6 @@ void transpose_omp_wrapper(float** matrix, int n, long double* time) {
 }
 
 void transpose_omp_block_based_wrapper(float** matrix, int n, long double* time) {
-    transpose_omp_block_based(matrix, n, BLOCK_SIZE, time); // Assuming block size of 64
+    const Config* cfg = get_config();
+    transpose_omp_block_based(matrix, n, cfg->BLOCK_SIZE, time);
 }
