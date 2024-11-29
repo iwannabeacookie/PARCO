@@ -3,7 +3,7 @@
 #include <time.h>
 #include "../include/init_matrix.h"
 #include "../include/sequential.h"
-#include "../include/parallel.h"
+#include "../include/omp_parallel.h"
 #include "../include/utils.h"
 #include "../include/config.h"
 
@@ -13,12 +13,12 @@ int main(int argc, char *argv[]) {
     float** m = init_matrix_parallel(MATRIX_DIMENSION);
 
     printf("\n===== Symmetricity Checks =====\n");
-    benchmark_function(is_symmetric_wrapper, m, MATRIX_DIMENSION, "is_symmetric");
+    benchmark_function(is_symmetric_sequential_wrapper, m, MATRIX_DIMENSION, "is_symmetric");
     benchmark_function(is_symmetric_implicit_wrapper, m, MATRIX_DIMENSION, "is_symmetric_implicit");
     benchmark_function(is_symmetric_omp_wrapper, m, MATRIX_DIMENSION, "is_symmetric_omp");
 
     printf("\n===== Transpositions =====\n");
-    benchmark_function(transpose_wrapper, m, MATRIX_DIMENSION, "transpose");
+    benchmark_function(transpose_sequential_wrapper, m, MATRIX_DIMENSION, "transpose");
     benchmark_function(transpose_omp_wrapper, m, MATRIX_DIMENSION, "transpose_omp");
     benchmark_function(transpose_omp_block_based_wrapper, m, MATRIX_DIMENSION, "transpose_omp_block_based");
 

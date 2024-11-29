@@ -2,8 +2,9 @@
 #include <time.h>
 #include "../include/utils.h"
 #include "../include/sequential.h"
-#include "../include/parallel.h"
+#include "../include/omp_parallel.h"
 #include "../include/config.h"
+#include "../include/implicit_parallel.h"
 
 void print_matrix(float** matrix, int n) {
     for (int i = 0; i < n; i++) {
@@ -66,8 +67,8 @@ void benchmark_function(void (*func)(float**, int, long double*), float** matrix
     printf("%s average time: %f seconds\n", func_name, total_time / NUM_RUNS);
 }
 
-void is_symmetric_wrapper(float** matrix, int n, long double* time) {
-    is_symmetric(matrix, n, time);
+void is_symmetric_sequential_wrapper(float** matrix, int n, long double* time) {
+    is_symmetric_sequential(matrix, n, time);
 }
 
 void is_symmetric_implicit_wrapper(float** matrix, int n, long double* time) {
@@ -78,8 +79,8 @@ void is_symmetric_omp_wrapper(float** matrix, int n, long double* time) {
     is_symmetric_omp(matrix, n, time);
 }
 
-void transpose_wrapper(float** matrix, int n, long double* time) {
-    transpose(matrix, n, time);
+void transpose_sequential_wrapper(float** matrix, int n, long double* time) {
+    transpose_sequential(matrix, n, time);
 }
 
 void transpose_omp_wrapper(float** matrix, int n, long double* time) {
