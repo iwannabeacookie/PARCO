@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -Iinclude -g -fopenmp -O2
 
 # If gcc-9.1.0 is available, use it
-ifneq ($(shell which gcc-9.1.0),)
+ifneq ($(shell which gcc-9.1.0 > /dev/null 2>&1),)
 CC = gcc-9.1.0
 endif
 
@@ -41,7 +41,9 @@ clean:
 all: $(TARGET)
 
 verbose: CFLAGS += -Wall -Wextra -fopt-info-vec-optimized
-verbose: $(TARGET)
+verbose:
+	-which gcc-9.1.0
+	$(MAKE) -s $(TARGET)
 	
 # Dependencies
 $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c $(INCLUDE_DIR)/init_matrix.h $(INCLUDE_DIR)/sequential.h $(INCLUDE_DIR)/omp_parallel.h $(INCLUDE_DIR)/utils.h $(INCLUDE_DIR)/config.h $(INCLUDE_DIR)/implicit_parallel.h
