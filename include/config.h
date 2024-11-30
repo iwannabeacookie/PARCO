@@ -3,6 +3,7 @@
 
 typedef struct {
     int CURR_RUN;
+    float** MATRIX;
     int MATRIX_DIMENSION;
     int VERBOSE_LEVEL;
     int BLOCK_SIZE;

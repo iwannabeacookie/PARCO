@@ -86,13 +86,13 @@ void deallocate_matrix(float** matrix, int n) {
     free(matrix);
 }
 
-void benchmark_function(void (*func)(float**, int, long double*), float** matrix, int n, const char* func_name) {
+void benchmark_function(void (*func)(long double*), const char* func_name) {
     Config* cfg = get_config();
     double total_time = 0.0;
     for (int i = 0; i < cfg->NUM_RUNS; i++) {
         print_loading_bar(i, cfg->NUM_RUNS);
         long double time;
-        func(matrix, n, &time);
+        func(&time);
         total_time += time;
     }
 
@@ -101,41 +101,55 @@ void benchmark_function(void (*func)(float**, int, long double*), float** matrix
     if (cfg->VERBOSE_LEVEL > 0) {
         printf("%s average time: %f seconds\n", func_name, total_time / cfg->NUM_RUNS);
     }
+
+    FILE *fp = fopen("benchmark_results.csv", "a");
+    if (fp != NULL) {
+        fprintf(fp, "%d,%d,%f,%s\n", cfg->MATRIX_DIMENSION, cfg->OMP_THREADS, total_time / cfg->NUM_RUNS, func_name);
+        fclose(fp);
+    }
 }
 
-void is_symmetric_sequential_wrapper(float** matrix, int n, long double* time) {
-    is_symmetric_sequential(matrix, n, time);
+void is_symmetric_sequential_wrapper(long double* time) {
+    Config* cfg = get_config();
+    is_symmetric_sequential(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
 }
 
-void is_symmetric_implicit_wrapper(float** matrix, int n, long double* time) {
-    is_symmetric_implicit(matrix, n, time);
+void is_symmetric_implicit_wrapper(long double* time) {
+    Config* cfg = get_config();
+    is_symmetric_implicit(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
 }
 
-void is_symmetric_omp_wrapper(float** matrix, int n, long double* time) {
-    is_symmetric_omp(matrix, n, time);
+void is_symmetric_omp_wrapper(long double* time) {
+    Config* cfg = get_config();
+    is_symmetric_omp(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
 }
 
-void transpose_sequential_wrapper(float** matrix, int n, long double* time) {
-    float** result = transpose_sequential(matrix, n, time);
-    deallocate_matrix(result, n);
+void transpose_sequential_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_sequential(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
 
-void transpose_omp_wrapper(float** matrix, int n, long double* time) {
-    float** result = transpose_omp(matrix, n, time);
-    deallocate_matrix(result, n);
+void transpose_omp_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_omp(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
 
-void transpose_omp_block_based_wrapper(float** matrix, int n, long double* time) {
-    float** result = transpose_omp_block_based(matrix, n, get_config()->BLOCK_SIZE, time);
-    deallocate_matrix(result, n);
+void transpose_omp_block_based_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_omp_block_based(cfg->MATRIX, cfg->MATRIX_DIMENSION, cfg->BLOCK_SIZE, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
 
-void transpose_omp_tile_distributed_wrapper(float** matrix, int n, long double* time){
-    float** result = transpose_omp_tile_distributed(matrix, n, get_config()->BLOCK_SIZE, time);
-    deallocate_matrix(result, n);
+void transpose_omp_tile_distributed_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_omp_tile_distributed(cfg->MATRIX, cfg->MATRIX_DIMENSION, cfg->BLOCK_SIZE, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
 
-void transpose_omp_tasks_wrapper(float** matrix, int n, long double* time) {
-    float** result = transpose_omp_tasks(matrix, n, get_config()->BLOCK_SIZE, time);
-    deallocate_matrix(result, n);
+void transpose_omp_tasks_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_omp_tasks(cfg->MATRIX, cfg->MATRIX_DIMENSION, cfg->BLOCK_SIZE, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }

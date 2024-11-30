@@ -18,17 +18,19 @@ int main(int argc, char *argv[]) {
     float** p = init_matrix_sequential(cfg->MATRIX_DIMENSION);
     float** m = init_matrix_parallel(cfg->MATRIX_DIMENSION);
 
+    cfg->MATRIX = p;
+
     printf("\n===== Processing Symmetricity Checks =====\n");
-    benchmark_function(is_symmetric_sequential_wrapper, m, cfg->MATRIX_DIMENSION, "is_symmetric_sequential");
-    benchmark_function(is_symmetric_implicit_wrapper, m, cfg->MATRIX_DIMENSION, "is_symmetric_implicit");
-    benchmark_function(is_symmetric_omp_wrapper, m, cfg->MATRIX_DIMENSION, "is_symmetric_omp");
+    benchmark_function(is_symmetric_sequential_wrapper, "is_symmetric_sequential");
+    benchmark_function(is_symmetric_implicit_wrapper, "is_symmetric_implicit");
+    benchmark_function(is_symmetric_omp_wrapper, "is_symmetric_omp");
 
     printf("\n===== Processing Transpositions =====\n");
-    benchmark_function(transpose_sequential_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_sequential");
-    benchmark_function(transpose_omp_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp");
-    benchmark_function(transpose_omp_block_based_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp_block_based");
-    benchmark_function(transpose_omp_tile_distributed_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp_tile_distributed");
-    benchmark_function(transpose_omp_tasks_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp_tasks");
+    benchmark_function(transpose_sequential_wrapper, "transpose_sequential");
+    benchmark_function(transpose_omp_wrapper, "transpose_omp");
+    benchmark_function(transpose_omp_block_based_wrapper, "transpose_omp_block_based");
+    benchmark_function(transpose_omp_tile_distributed_wrapper, "transpose_omp_tile_distributed");
+    benchmark_function(transpose_omp_tasks_wrapper, "transpose_omp_tasks");
 
     return 0;
 }
