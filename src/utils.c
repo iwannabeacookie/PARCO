@@ -104,7 +104,7 @@ void benchmark_function(void (*func)(long double*), const char* func_name) {
 
     FILE *fp = fopen("benchmark_results.csv", "a");
     if (fp != NULL) {
-        fprintf(fp, "%d,%d,%f,%s\n", cfg->MATRIX_DIMENSION, cfg->OMP_THREADS, total_time / cfg->NUM_RUNS, func_name);
+        fprintf(fp, "%d,%d,%d,%f,%s\n", cfg->MATRIX_DIMENSION, cfg->OMP_THREADS, cfg->BLOCK_SIZE, total_time / cfg->NUM_RUNS, func_name);
         fclose(fp);
     }
 }

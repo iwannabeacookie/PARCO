@@ -149,6 +149,12 @@ void init_config(int argc, char *argv[]) {
         }
     }
 
+    FILE *fp = fopen("benchmark_results.csv", "w");
+    if (fp != NULL) {
+        fprintf(fp, "matrix_dimension,threads,block_size,time,func_name\n");
+        fclose(fp);
+    }
+
     // Set the configuration
     config.CURR_RUN = CURR_RUN;
     config.MIN_MATRIX_DIMENSION = MIN_MATRIX_DIMENSION;
