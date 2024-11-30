@@ -1,6 +1,6 @@
 # Compiler
 CC = gcc
-CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP
+CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP -ftree-vectorize -fopenmp-simd -march=native -flto -floop-parallelize-all
 
 # If gcc-9.1.0 is available, use it
 ifneq ($(shell which gcc-9.1.0 > /dev/null 2>&1),)
@@ -38,7 +38,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 # Clean rule to remove generated files
 .PHONY: clean all verbose
 clean:
-	rm -rf $(BUILD_DIR)/*.o $(TARGET)
+	rm -rf $(BUILD_DIR)/ $(TARGET)
 
 all: $(TARGET)
 

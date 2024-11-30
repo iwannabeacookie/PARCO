@@ -105,3 +105,90 @@ float** transpose_omp_block_based(float **matrix, int n, int block_size, long do
 
     return result;
 }
+
+// Tile distributed implementation disbributes the tile operations between threads scheduled statically to match the cache line size
+float ** transpose_omp_tile_distributed(float **matrix, int n, int tile_size, long double* time) {
+    struct timespec start, end;
+
+    float **result = malloc(n * sizeof(float*));
+    for (int i = 0; i < n; i++) {
+        result[i] = malloc(n * sizeof(float));
+    }
+
+    int i, j, ii, jj;
+
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            clock_gettime(CLOCK_MONOTONIC, &start);
+        }
+
+        #pragma omp for private(i,j,ii,jj) schedule(static)
+        for (i = 0; i < n; i += tile_size) {
+            for (j = 0; j < n; j += tile_size) {
+                for (ii = i; ii < i + tile_size && ii < n; ii++) {
+                    for (jj = j; jj < j + tile_size && jj < n; jj++) {
+                        result[ii][jj] = matrix[jj][ii];
+                    }
+                }
+            }
+        }
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed the tile-based (size %d) transpose using OMP in: %Lf\n", tile_size, *time);
+    }
+
+    return result;
+}
+
+float ** transpose_omp_tasks(float **matrix, int n, int tile_size, long double* time) {
+    struct timespec start, end;
+
+    float **result = malloc(n * sizeof(float*));
+    for (int i = 0; i < n; i++) {
+        result[i] = malloc(n * sizeof(float));
+    }
+
+    int i, j;
+
+    #pragma omp parallel
+    {
+        #pragma omp single nowait
+        {
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            for (i = 0; i < n; i += tile_size) {
+                for (j = 0; j < n; j += tile_size) {
+                    #pragma omp task firstprivate(i, j) shared(matrix, result)
+                    {
+                        int ii, jj;
+                        int max_ii = (i + tile_size > n) ? n : i + tile_size;
+                        int max_jj = (j + tile_size > n) ? n : j + tile_size;
+
+                        for (ii = i; ii < max_ii; ii++) {
+                            for (jj = j; jj < max_jj; jj++) {
+                                result[ii][jj] = matrix[jj][ii];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        #pragma omp taskwait
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed the transpose using OMP tasks in: %Lf\n", *time);
+    }
+
+    return result;
+}

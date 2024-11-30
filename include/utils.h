@@ -9,6 +9,10 @@ void test_randomness(float** m1, float** m2, int n);
 
 double get_time_in_seconds();
 
+void print_loading_bar(int progress, int total);
+
+void deallocate_matrix(float** matrix, int n);
+
 void benchmark_function(void (*func)(float**, int, long double*), float** matrix, int n, const char* func_name);
 
 void is_symmetric_sequential_wrapper(float** matrix, int n, long double* time);
@@ -22,5 +26,9 @@ void transpose_sequential_wrapper(float** matrix, int n, long double* time);
 void transpose_omp_wrapper(float** matrix, int n, long double* time);
 
 void transpose_omp_block_based_wrapper(float** matrix, int n, long double* time);
+
+void transpose_omp_tile_distributed_wrapper(float** matrix, int n, long double* time);
+
+void transpose_omp_tasks_wrapper(float** matrix, int n, long double* time);
 
 #endif // !UTILS_H

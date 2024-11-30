@@ -1,5 +1,6 @@
 #include "../include/init_matrix.h"
 #include "../include/config.h"
+#include "../include/utils.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -12,10 +13,13 @@ float** init_matrix_sequential(int n) {
     float** matrix = (float**)malloc(n * sizeof(float*));
     for (int i = 0; i < n; i++) {
         matrix[i] = (float*)malloc(n * sizeof(float));
+        print_loading_bar(i, n);
         for (int j = 0; j < n; j++) {
             matrix[i][j] = ((float)(rand() % (int)10e6) / 1000);
         }
     }
+
+    printf("\x1b[2K");
 
     if (get_config()->VERBOSE_LEVEL > 1) {
         printf("Matrix generated sequentialy:\n");

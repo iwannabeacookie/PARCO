@@ -14,19 +14,21 @@ int main(int argc, char *argv[]) {
 
     Config* cfg = get_config();
 
-    printf("===== Matrix Generation =====\n");
+    printf("===== Processing Matrix Generation =====\n");
     float** p = init_matrix_sequential(cfg->MATRIX_DIMENSION);
     float** m = init_matrix_parallel(cfg->MATRIX_DIMENSION);
 
-    printf("\n===== Symmetricity Checks =====\n");
+    printf("\n===== Processing Symmetricity Checks =====\n");
     benchmark_function(is_symmetric_sequential_wrapper, m, cfg->MATRIX_DIMENSION, "is_symmetric_sequential");
     benchmark_function(is_symmetric_implicit_wrapper, m, cfg->MATRIX_DIMENSION, "is_symmetric_implicit");
     benchmark_function(is_symmetric_omp_wrapper, m, cfg->MATRIX_DIMENSION, "is_symmetric_omp");
 
-    printf("\n===== Transpositions =====\n");
+    printf("\n===== Processing Transpositions =====\n");
     benchmark_function(transpose_sequential_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_sequential");
     benchmark_function(transpose_omp_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp");
     benchmark_function(transpose_omp_block_based_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp_block_based");
+    benchmark_function(transpose_omp_tile_distributed_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp_tile_distributed");
+    benchmark_function(transpose_omp_tasks_wrapper, m, cfg->MATRIX_DIMENSION, "transpose_omp_tasks");
 
     return 0;
 }

@@ -33,6 +33,8 @@ void init_config(int argc, char *argv[]) {
         if (strcmp(argv[i], "--help") == 0){
             printf("Usage: %s [options]\n", argv[0]);
             printf("Options:\n");
+            printf("  --help                     Print this message\n");
+            printf("  --verbose <int>            Set the verbose level (default: 0)\n");
             printf("  --matrix-dimension <int>  Set the matrix dimension (default: 1024)\n");
             printf("  --block-size <int>         Set the block size (default: 4)\n");
             printf("  --runs <int>               Set the number of runs (default: 1)\n");
