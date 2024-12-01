@@ -47,6 +47,6 @@ verbose:
 	-which gcc-9.1.0
 	$(MAKE) -s $(TARGET)
 
-debug: CFLAGS += -g -O0
+debug: CFLAGS += -g
 debug:
 	$(MAKE) -s $(TARGET)
