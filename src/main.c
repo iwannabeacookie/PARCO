@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
 
             printf("\n===== Processing Transpositions for size %d with %d threads =====\n", size, threads);
             benchmark_function(transpose_sequential_wrapper, "transpose_sequential");
+            benchmark_function(transpose_implicit_wrapper, "transpose_implicit");
 
             for (int block_size = cfg->MIN_BLOCK_SIZE; block_size <= cfg->MAX_BLOCK_SIZE; block_size *= 2) {
                 cfg->BLOCK_SIZE = block_size;

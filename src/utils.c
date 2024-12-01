@@ -130,6 +130,12 @@ void transpose_sequential_wrapper(long double* time) {
     deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
 
+void transpose_implicit_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_implicit(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+}
+
 void transpose_omp_wrapper(long double* time) {
     Config* cfg = get_config();
     float** result = transpose_omp(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
