@@ -1,6 +1,6 @@
 # Compiler
 CC = gcc
-CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP -ftree-vectorize -fopenmp-simd -march=native -flto -floop-parallelize-all
+CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP -ftree-vectorize -fopenmp-simd -march=native -flto
 
 # If gcc-9.1.0 is available, use it
 ifneq ($(shell which gcc-9.1.0 > /dev/null 2>&1),)
