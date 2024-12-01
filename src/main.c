@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
 
             cfg->MATRIX = p;
 
+            deallocate_matrix(m, cfg->MATRIX_DIMENSION);
+
             printf("\n===== Processing Symmetricity Checks for size %d with %d threads =====\n", size, threads);
             benchmark_function(is_symmetric_sequential_wrapper, "is_symmetric_sequential");
             benchmark_function(is_symmetric_implicit_wrapper, "is_symmetric_implicit");
@@ -45,6 +47,7 @@ int main(int argc, char *argv[]) {
 
             printf("\n");
         }
+        deallocate_matrix(cfg->MATRIX, cfg->MATRIX_DIMENSION);
     }
 
     return 0;
