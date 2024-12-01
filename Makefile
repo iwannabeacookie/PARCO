@@ -36,7 +36,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean rule to remove generated files
-.PHONY: clean all verbose
+.PHONY: clean all verbose debug
 clean:
 	rm -rf $(BUILD_DIR)/ $(TARGET)
 
@@ -45,4 +45,8 @@ all: $(TARGET)
 verbose: CFLAGS += -Wall -Wextra -fopt-info-vec-optimized
 verbose:
 	-which gcc-9.1.0
+	$(MAKE) -s $(TARGET)
+
+debug: CFLAGS += -g -O0
+debug:
 	$(MAKE) -s $(TARGET)

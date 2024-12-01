@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
             for (int block_size = cfg->MIN_BLOCK_SIZE; block_size <= cfg->MAX_BLOCK_SIZE; block_size *= 2) {
                 cfg->BLOCK_SIZE = block_size;
                 printf("\n--- Block Size: %d ---\n", block_size);
-                benchmark_function(transpose_implicit_block_based_wrapper, "transpose_implicit_block_based");
-                benchmark_function(transpose_impplicit_cache_oblivious_wrapper, "transpose_implicit_cache_oblivious");
+                // benchmark_function(transpose_implicit_block_based_wrapper, "transpose_implicit_block_based");
+                // benchmark_function(transpose_impplicit_cache_oblivious_wrapper, "transpose_implicit_cache_oblivious");
                 benchmark_function(transpose_omp_wrapper, "transpose_omp");
                 benchmark_function(transpose_omp_block_based_wrapper, "transpose_omp_block_based");
                 benchmark_function(transpose_omp_tile_distributed_wrapper, "transpose_omp_tile_distributed");
