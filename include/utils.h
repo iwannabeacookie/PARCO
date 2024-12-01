@@ -31,4 +31,6 @@ void transpose_omp_tile_distributed_wrapper(long double* time);
 
 void transpose_omp_tasks_wrapper(long double* time);
 
+void transpose_cache_oblivious_wrapper(long double* time);
+
 #endif // !UTILS_H

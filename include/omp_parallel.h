@@ -13,4 +13,6 @@ float** transpose_omp_tile_distributed(float **matrix, int n, int tile_size, lon
 
 float ** transpose_omp_tasks(float **matrix, int n, int tile_size, long double* time);
 
+float ** transpose_cache_oblivious(float **matrix, int n, long double* time);
+
 #endif // !PARALLEL_H

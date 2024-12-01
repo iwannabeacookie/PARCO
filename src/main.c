@@ -43,7 +43,13 @@ int main(int argc, char *argv[]) {
                 benchmark_function(transpose_omp_block_based_wrapper, "transpose_omp_block_based");
                 benchmark_function(transpose_omp_tile_distributed_wrapper, "transpose_omp_tile_distributed");
                 benchmark_function(transpose_omp_tasks_wrapper, "transpose_omp_tasks");
+
+                if (cfg->VERBOSE_LEVEL > 0) {
+                    printf("\n %%- Cache-Oblivious Transposition -%%\n");
+                }
+                benchmark_function(transpose_cache_oblivious_wrapper, "transpose_cache_oblivious");
             }
+            
 
             printf("\n");
         }

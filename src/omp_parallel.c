@@ -192,3 +192,67 @@ float ** transpose_omp_tasks(float **matrix, int n, int tile_size, long double* 
 
     return result;
 }
+
+void transpose_recursive(float** original, float** transposed, int start_row, int start_col, int size, int n) {
+    Config* cfg = get_config();
+    if (size <= cfg->BLOCK_SIZE) {
+        // Base case: perform standard transposition
+        for (int i = start_row; i < start_row + size; i++) {
+            for (int j = start_col; j < start_col + size; j++) {
+                transposed[j][i] = original[i][j];
+            }
+        }
+    } else {
+        // Recursive case: divide the matrix into quadrants
+        int half_size = size / 2;
+
+        // Parallelize the recursive calls
+        #pragma omp task shared(original, transposed) firstprivate(start_row, start_col, half_size, n)
+        transpose_recursive(original, transposed, start_row, start_col, half_size, n);
+
+        #pragma omp task shared(original, transposed) firstprivate(start_row, start_col, half_size, n)
+        transpose_recursive(original, transposed, start_row, start_col + half_size, half_size, n);
+
+        #pragma omp task shared(original, transposed) firstprivate(start_row, start_col, half_size, n)
+        transpose_recursive(original, transposed, start_row + half_size, start_col, half_size, n);
+
+        #pragma omp task shared(original, transposed) firstprivate(start_row, start_col, half_size, n)
+        transpose_recursive(original, transposed, start_row + half_size, start_col + half_size, half_size, n);
+
+        #pragma omp taskwait
+    }
+}
+
+float** transpose_cache_oblivious(float** matrix, int n, long double* time) {
+    struct timespec start, end;
+    float** transposed = malloc(n * sizeof(float*));
+    if (transposed == NULL) {
+        fprintf(stderr, "Memory allocation failed for transposed matrix\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < n; i++) {
+        transposed[i] = malloc(n * sizeof(float));
+        if (transposed[i] == NULL) {
+            fprintf(stderr, "Memory allocation failed for transposed[%d]\n", i);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            clock_gettime(CLOCK_MONOTONIC, &start);
+            transpose_recursive(matrix, transposed, 0, 0, n, n);
+            clock_gettime(CLOCK_MONOTONIC, &end);
+        }
+    }
+
+    *time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+    if (get_config()->VERBOSE_LEVEL > 1) {
+        printf("Computed the cache-oblivious transpose using OMP in: %Lf\n", *time);
+    }
+
+    return transposed;
+}

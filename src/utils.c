@@ -153,3 +153,9 @@ void transpose_omp_tasks_wrapper(long double* time) {
     float** result = transpose_omp_tasks(cfg->MATRIX, cfg->MATRIX_DIMENSION, cfg->BLOCK_SIZE, time);
     deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
+
+void transpose_cache_oblivious_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_cache_oblivious(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+}
