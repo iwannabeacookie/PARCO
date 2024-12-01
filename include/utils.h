@@ -25,6 +25,10 @@ void transpose_sequential_wrapper(long double* time);
 
 void transpose_implicit_wrapper(long double* time);
 
+void transpose_implicit_block_based_wrapper(long double* time);
+
+void transpose_impplicit_cache_oblivious_wrapper(long double* time);
+
 void transpose_omp_wrapper(long double* time);
 
 void transpose_omp_block_based_wrapper(long double* time);

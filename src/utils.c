@@ -136,6 +136,18 @@ void transpose_implicit_wrapper(long double* time) {
     deallocate_matrix(result, cfg->MATRIX_DIMENSION);
 }
 
+void transpose_implicit_block_based_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_implicit_block_based(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+}
+
+void transpose_impplicit_cache_oblivious_wrapper(long double* time) {
+    Config* cfg = get_config();
+    float** result = transpose_implicit_cache_oblivious(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
+    deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+}
+
 void transpose_omp_wrapper(long double* time) {
     Config* cfg = get_config();
     float** result = transpose_omp(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
