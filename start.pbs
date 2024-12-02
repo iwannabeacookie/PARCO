@@ -11,4 +11,9 @@ export OMP_NUM_THREADS=64
 cd PARCO-D1
 make all
 
-./bin/out --benchmark-full
+if [ -z "$flags" ]; then
+  echo "Flags are not set, running full benchmark"
+  ./bin/out --benchmark-full
+else
+  ./bin/out $flags
+fi

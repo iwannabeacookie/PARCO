@@ -82,6 +82,18 @@ PARCO-D1/
    qsub start.pbs
    ```
 
+3. To add configuration to the job, add the "-v" flag and specify a string of [configuration(#configuration)] options as a "flags" variable.
+
+   ```bash
+   qsub -v flags="CONFIGURATION" start.pbs
+   ```
+
+   **Example:**
+
+   ```bash
+   qsub -v flags="--runs 100 --matrix-dimension 64-2048 --threads 4 --block-size 32-256 --verbose 1" start.pbs
+   ```
+
 ### Running Interactive
 
 1. **Request an interactive session**
