@@ -172,6 +172,12 @@ Once the benchmark completes, a CSV file named `benchmark_results.csv` is genera
    ./create_venv.sh
    ```
 
+1.1 The provided script will create a virtual environment named `venv`, install the required dependencies, and activate the environment. If you spawn another shell, you will have to activate the environment manually, before proceeding.
+
+   ```bash
+   source venv/bin/activate
+   ```
+
 2. **Run the Parser Script**
 
    Ensure you are in the project's root directory and execute:
