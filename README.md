@@ -9,9 +9,6 @@
   - [Running the Benchmark](#running-the-benchmark)
   - [Generating Plots](#generating-plots)
 - [Code Overview](#code-overview)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
 
 ## Features
 
