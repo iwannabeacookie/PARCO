@@ -166,7 +166,13 @@ This command initializes the benchmark with matrix dimensions ranging from 64 to
 
 Once the benchmark completes, a CSV file named `benchmark_results.csv` is generated. Use the provided Python script to parse this data and generate visualizations.
 
-1. **Run the Parser Script**
+1. **Create the Virtual Environment**
+
+   ```bash
+   ./create_venv.sh
+   ```
+
+2. **Run the Parser Script**
 
    Ensure you are in the project's root directory and execute:
 
@@ -174,7 +180,7 @@ Once the benchmark completes, a CSV file named `benchmark_results.csv` is genera
    python parser.py
    ```
 
-2. **Generated Plots**
+3. **Generated Plots**
 
    The script will generate various plots saved in the `plots/` directory, organized by matrix dimension and function names, as well as a `speedup_plot.png` summarizing the speedup metrics.
 
@@ -204,10 +210,6 @@ Once the benchmark completes, a CSV file named `benchmark_results.csv` is genera
 
 - **Parser Script (`parser.py`)**
   - Parses the benchmark CSV results and generates 2D and 3D plots for performance visualization.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ---
 
