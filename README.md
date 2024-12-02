@@ -82,7 +82,7 @@ PARCO-D1/
    qsub start.pbs
    ```
 
-3. To add configuration to the job, add the "-v" flag and specify a string of [configuration(#configuration)] options as a "flags" variable.
+3. To add configuration to the job, add the "-v" flag and specify a string of [configuration](#configuration) options as a "flags" variable.
 
    ```bash
    qsub -v flags="CONFIGURATION" start.pbs
