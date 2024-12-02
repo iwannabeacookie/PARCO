@@ -72,7 +72,24 @@ PARCO-D1/
 
 ## Running on the Unitn HPC Cluster
 
+### Submitting the job
 
+1. Make sure the repository is cloned into the home directory. Or change the pbs script to properly access the cloned repository.
+
+2. **Queue the pbs script**
+
+   ```bash
+   qsub start.pbs
+   ```
+
+### Running Interactive
+
+1. **Request an interactive session**
+
+   ```bash
+   qsub -I -l select=1:ncpus=4:mem=1gb
+   ```
+2. **Proceed with the next subsection**
 
 ## Building the Project
 
