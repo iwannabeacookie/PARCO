@@ -64,7 +64,7 @@ PARCO-D1/
 
 2. **Verify GCC Installation**
 
-   Ensure that `gcc-9.1.0` is installed. If not, install it or adjust the `Makefile` to use your available GCC version.
+   Installation will attempt to use 'gcc' as a compiler, unless gcc-9.1.0 is available. In case of issues, verify the GCC version:
 
    ```bash
    gcc --version
