@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N parco-job
-#PBS -o ./parco-job.out
-#PBS -e ./parco-job.err
+#PBS -o ./out-parco
+#PBS -e ./err-parco
 #PBS -q short_cpuQ
 #PBS -l walltime=0:10:00
 #PBS -l select=1:ncpus=64:mpiprocs=64:mem=1gb
