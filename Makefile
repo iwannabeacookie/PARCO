@@ -1,7 +1,7 @@
 # Compiler
 # CC = gcc
 CC = mpicc
-CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP -ftree-vectorize -march=native -flto -lmpi
+CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP -ftree-vectorize -march=native -flto -lmpi -lm
 
 # If gcc-9.1.0 is available, use it
 # ifneq ($(shell which gcc-9.1.0),)
