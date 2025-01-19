@@ -1,14 +1,14 @@
 ## Table of Contents
 
 - [Features](#features)
-- [Project Structure](#project-structure)
+- [Project Structure](#project structure)
 - [Installation](#installation)
-- [Building the Project](#building-the-project)
+- [Building the Project](#building the project)
 - [Usage](#usage)
   - [Configuration](#configuration)
-  - [Running the Benchmark](#running-the-benchmark)
-  - [Generating Plots](#generating-plots)
-- [Code Overview](#code-overview)
+  - [Running the Benchmark](#running the benchmark)
+  - [Generating Plots](#generating plots)
+- [Code Overview](#code overview)
 
 ## Features
 
@@ -21,23 +21,27 @@
 ## Project Structure
 
 ```
-PARCO-D1/
+PARCO/
 ├── include/
 │   ├── init_matrix.h
 │   ├── sequential.h
-│   ├── config.h
 │   ├── omp_parallel.h
-│   ├── utils.h
-│   └── implicit_parallel.h
+│   ├── implicit_parallel.h
+│   ├── config.h
+│   ├── mpi_parallel.h
+│   └── utils.h
 ├── src/
 │   ├── sequential.c
 │   ├── init_matrix.c
-│   ├── config.c
 │   ├── omp_parallel.c
-│   ├── utils.c
 │   ├── implicit_parallel.c
-│   └── main.c
-├── CodeCollectoR/
+│   ├── main.c
+│   ├── mpi_parallel.c
+│   ├── config.c
+│   └── utils.c
+├── README.md
+├── create_venv.sh
+├── start.pbs
 ├── Makefile
 └── parser.py
 ```
@@ -46,7 +50,6 @@ PARCO-D1/
 
 - **include/**: Contains all the header files defining interfaces for various modules.
 - **src/**: Holds the source `.c` files implementing the functionalities declared in the headers.
-- **CodeCollectoR/**: [Description needed if applicable]
 - **Makefile**: Automates the build process, handling compilation and linking.
 - **parser.py**: Python script for parsing benchmark results and generating visualizations.
 
@@ -96,7 +99,7 @@ PARCO-D1/
 1. **Request an interactive session**
 
    ```bash
-   qsub -I -l select=1:ncpus=4:mem=1gb
+   qsub -I -l select=1:ncpus=4:mpiprocs=4:mem=1gb
    ```
 2. **Proceed with the next subsection**
 

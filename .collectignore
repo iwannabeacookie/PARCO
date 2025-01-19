@@ -7,3 +7,5 @@ plots/
 report/
 speedup_plot.png
 venv/
+report-d1/
+report-d2/
