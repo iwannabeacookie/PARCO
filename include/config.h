@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <mpi.h>
+
 typedef struct {
     int CURR_RUN;
     float** MATRIX;
@@ -16,6 +18,7 @@ typedef struct {
     int MIN_OMP_THREADS;
     int MAX_OMP_THREADS;
     int OMP_THREADS;
+    MPI_Comm CURR_COMM;
 } Config;
 
 // Function to initialize the configuration

@@ -1,0 +1,9 @@
+build/
+bin/
+benchmark_results.csv
+cluster.csv
+collected_code.txt
+plots/
+report/
+speedup_plot.png
+venv/

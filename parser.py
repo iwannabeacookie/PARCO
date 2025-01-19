@@ -124,13 +124,13 @@ def plot_speedup(df):
 
 def plot_2d(df):
     """
-    Plots 2D graphs for 'transpose_implicit' and 'transpose_sequential' functions,
+    Plots 2D graphs for 'transpose_implicit', 'transpose_sequential', and 'transpose_mpi' functions,
     and compares speedup between them.
     
     Parameters:
     - df: A DataFrame containing the benchmark results.
     """
-    functions = ['transpose_implicit', 'transpose_sequential']
+    functions = ['transpose_implicit', 'transpose_sequential', 'transpose_mpi']
     
     for func in functions:
         subset = df[df['func_name'] == func]
@@ -154,27 +154,31 @@ def plot_2d(df):
         plt.savefig(os.path.join(output_dir, f'{func}_2d_plot.png'), bbox_inches='tight')
         plt.close()
     
-    # Compare speedup between 'transpose_implicit' and 'transpose_sequential'
+    # Compare speedup between 'transpose_implicit', 'transpose_sequential', and 'transpose_mpi'
     implicit = df[df['func_name'] == 'transpose_implicit']
     sequential = df[df['func_name'] == 'transpose_sequential']
+    mpi = df[df['func_name'] == 'transpose_mpi']
     
     merged = pd.merge(implicit, sequential, on='matrix_dimension', suffixes=('_implicit', '_sequential'))
-    merged['speedup'] = merged['time_sequential'] / merged['time_implicit']
+    merged = pd.merge(merged, mpi, on='matrix_dimension', suffixes=('', '_mpi'))
+    merged['speedup_implicit'] = merged['time_sequential'] / merged['time_implicit']
+    merged['speedup_mpi'] = merged['time_sequential'] / merged['time']
     
     plt.figure(figsize=(10, 6))
-    plt.plot(merged['matrix_dimension'], merged['speedup'], marker='o', label='Speedup (Implicit vs Sequential)')
+    plt.plot(merged['matrix_dimension'], merged['speedup_implicit'], marker='o', label='Speedup (Implicit vs Sequential)')
+    plt.plot(merged['matrix_dimension'], merged['speedup_mpi'], marker='s', label='Speedup (MPI vs Sequential)')
     
     plt.xscale('log')
     plt.xlabel('Matrix Dimension')
     plt.ylabel('Speedup')
-    plt.title('Speedup of Implicit vs Sequential')
+    plt.title('Speedup of Implicit and MPI vs Sequential')
     plt.legend()
     plt.grid(True)
     
     # Set x-tick labels to the encountered matrix dimensions
     plt.xticks(ticks=merged['matrix_dimension'].unique(), labels=merged['matrix_dimension'].unique(), rotation=45)
     
-    plt.savefig(os.path.join(output_dir, 'implicit_vs_sequential_speedup.png'), bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, 'implicit_vs_sequential_vs_mpi_speedup.png'), bbox_inches='tight')
     plt.close()
 
 def main():

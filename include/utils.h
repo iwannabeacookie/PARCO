@@ -39,4 +39,10 @@ void transpose_omp_tasks_wrapper(long double* time);
 
 void transpose_cache_oblivious_wrapper(long double* time);
 
+void is_symmetric_mpi_wrapper(long double* time);
+
+void transpose_mpi_wrapper(long double* time);
+
+void alltoall_transpose_mpi_wrapper(long double* time);
+
 #endif // !UTILS_H

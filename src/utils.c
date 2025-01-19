@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
+#include <mpi.h>
 #include "../include/utils.h"
 #include "../include/sequential.h"
 #include "../include/omp_parallel.h"
 #include "../include/config.h"
 #include "../include/implicit_parallel.h"
+#include "../include/mpi_parallel.h"
 
 void print_matrix(float** matrix, int n) {
     for (int i = 0; i < n; i++) {
@@ -88,24 +91,33 @@ void deallocate_matrix(float** matrix, int n) {
 
 void benchmark_function(void (*func)(long double*), const char* func_name) {
     Config* cfg = get_config();
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     double total_time = 0.0;
     for (int i = 0; i < cfg->NUM_RUNS; i++) {
-        print_loading_bar(i, cfg->NUM_RUNS);
+        if (rank == 0) {
+            print_loading_bar(i, cfg->NUM_RUNS);
+        }
         long double time;
         func(&time);
         total_time += time;
     }
 
-    printf("\x1b[2K");
+    if (rank == 0) {
+        printf("\x1b[2K");
 
-    if (cfg->VERBOSE_LEVEL > 0) {
-        printf("%s average time: %f seconds\n", func_name, total_time / cfg->NUM_RUNS);
-    }
+        if (cfg->VERBOSE_LEVEL > 0) {
+            printf("%s average time: %f seconds\n", func_name, total_time / cfg->NUM_RUNS);
+        }
 
-    FILE *fp = fopen("benchmark_results.csv", "a");
-    if (fp != NULL) {
-        fprintf(fp, "%d,%d,%d,%f,%s\n", cfg->MATRIX_DIMENSION, cfg->OMP_THREADS, cfg->BLOCK_SIZE, total_time / cfg->NUM_RUNS, func_name);
-        fclose(fp);
+        FILE *fp = fopen("benchmark_results.csv", "a");
+        if (fp != NULL) {
+            fprintf(fp, "%d,%d,%d,%f,%s\n", cfg->MATRIX_DIMENSION, cfg->OMP_THREADS, cfg->BLOCK_SIZE, total_time / cfg->NUM_RUNS, func_name);
+            fclose(fp);
+        }
     }
 }
 
@@ -176,4 +188,39 @@ void transpose_cache_oblivious_wrapper(long double* time) {
     Config* cfg = get_config();
     float** result = transpose_cache_oblivious(cfg->MATRIX, cfg->MATRIX_DIMENSION, time);
     deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+}
+
+void is_symmetric_mpi_wrapper(long double* time) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    Config* cfg = get_config();
+    is_symmetric_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
+}
+
+void transpose_mpi_wrapper(long double* time) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    Config* cfg = get_config();
+    float** result = transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
+
+    if (rank == 0) {
+        deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+    }
+}
+
+void alltoall_transpose_mpi_wrapper(long double* time) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    Config* cfg = get_config();
+    float** result = alltoall_transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
+
+    if (rank == 0) {
+        deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+    }
 }
