@@ -7,3 +7,5 @@ plots/
 report/
 speedup_plot.png
 venv/
+err-parco
+out-parco

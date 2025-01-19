@@ -4,9 +4,9 @@ CC = mpicc
 CFLAGS = -Iinclude -g -fopenmp -O2 -MMD -MP -ftree-vectorize -march=native -flto -lmpi
 
 # If gcc-9.1.0 is available, use it
-ifneq ($(shell which gcc-9.1.0),)
-CC = gcc-9.1.0
-endif
+# ifneq ($(shell which gcc-9.1.0),)
+# CC = gcc-9.1.0
+# endif
 
 # Directories
 SRC_DIR = src

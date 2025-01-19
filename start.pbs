@@ -7,6 +7,7 @@
 #PBS -l select=1:ncpus=64:mem=1gb
 
 module load gcc91
+module load mpicc-3.2.1--gcc-9.1.0
 export OMP_NUM_THREADS=64
 cd PARCO
 make all
