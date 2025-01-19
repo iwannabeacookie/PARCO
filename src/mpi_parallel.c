@@ -446,32 +446,49 @@ float** alltoall_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, i
 }
 
 float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, long double* time, int verbosity) {
-    int dims[2], periods[2] = {0, 0}, coords[2];
+    int dims[2] = {0, 0}; // Let MPI_Dims_create determine the dimensions
     MPI_Comm grid_comm;
     
-    // Determine grid dimensions (assuming sqrt(size) is integer)
-    dims[0] = dims[1] = (int)sqrt(size);
-    if(dims[0] * dims[1] != size) {
-        if(rank == 0) {
-            fprintf(stderr, "Number of processes must be a perfect square.\n");
+    // Determine grid dimensions
+    MPI_Dims_create(size, 2, dims); // MPI will set dims[0] and dims[1] such that dims[0]*dims[1]=size and the grid is as square as possible
+
+    // Debugging Print
+    if (verbosity >= 2) {
+        if(rank == 0){
+            printf("Grid dimensions: %d x %d\n", dims[0], dims[1]);
         }
-        MPI_Abort(comm, EXIT_FAILURE);
     }
 
     // Create Cartesian topology
-    MPI_Cart_create(comm, 2, dims, periods, 0, &grid_comm);
+    int periods[2] = {0, 0};
+    int reorder = 1;
+    int ierr = MPI_Cart_create(comm, 2, dims, periods, reorder, &grid_comm);
+    if (ierr != MPI_SUCCESS) {
+        fprintf(stderr, "Rank %d: Failed to create Cartesian topology.\n", rank);
+        MPI_Abort(comm, ierr);
+    }
+
+    // Get coordinates in the grid
+    int coords[2];
     MPI_Cart_coords(grid_comm, rank, 2, coords);
-
-    // Define block size
-    int block_size = n / dims[0]; // Assuming n is divisible by dims[0]
-
+    
+    // Calculate block size based on grid dimensions
+    if (n % dims[0] != 0 || n % dims[1] != 0) {
+        if(rank == 0) {
+            fprintf(stderr, "Matrix size n=%d must be divisible by grid dimensions %d x %d.\n", n, dims[0], dims[1]);
+        }
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+    int block_rows = n / dims[0];
+    int block_cols = n / dims[1];
+    
     // Allocate local block
-    float* local_block = malloc(block_size * block_size * sizeof(float));
+    float* local_block = malloc(block_rows * block_cols * sizeof(float));
     if (local_block == NULL) {
         fprintf(stderr, "Rank %d: Failed to allocate local_block.\n", rank);
         MPI_Abort(comm, EXIT_FAILURE);
     }
-
+    
     // Only root process flattens the matrix
     float* flat_matrix = NULL;
     if(rank == 0) {
@@ -481,15 +498,16 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
             MPI_Abort(comm, EXIT_FAILURE);
         }
     }
-
-    // Scatter blocks to all processes
+    
+    // Create a datatype for a subarray (block)
     MPI_Datatype block_type, block_type_resized;
-    MPI_Type_create_subarray(2, (int[]){n, n}, (int[]){block_size, block_size},
-                            (int[]){coords[0] * block_size, coords[1] * block_size},
+    MPI_Type_create_subarray(2, (int[]){n, n}, (int[]){block_rows, block_cols},
+                            (int[]){coords[0] * block_rows, coords[1] * block_cols},
                             MPI_ORDER_C, MPI_FLOAT, &block_type);
-    MPI_Type_create_resized(block_type, 0, sizeof(float), &block_type_resized);
+    MPI_Type_create_resized(block_type, 0, block_cols * sizeof(float), &block_type_resized);
     MPI_Type_commit(&block_type_resized);
-
+    
+    // Prepare send counts and displacements
     int send_counts[size];
     int displs[size];
     if(rank == 0) {
@@ -498,28 +516,32 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
             send_counts[i] = 1;
         }
     }
-
+    
+    // Scatter the blocks to all processes
     MPI_Scatterv(flat_matrix, send_counts, displs, block_type_resized,
-                 local_block, block_size * block_size, MPI_FLOAT,
-                 0, grid_comm);
-
-    // Measure the start time
+                local_block, block_rows * block_cols, MPI_FLOAT,
+                0, grid_comm);
+    
+    // Start timing
     double start_time = MPI_Wtime();
-
+    
     // Transpose the local block
-    for(int i = 0; i < block_size; i++) {
-        for(int j = i+1; j < block_size; j++) {
-            float temp = local_block[i * block_size + j];
-            local_block[i * block_size + j] = local_block[j * block_size + i];
-            local_block[j * block_size + i] = temp;
+    for(int i = 0; i < block_rows; i++) {
+        for(int j = 0; j < block_cols; j++) {
+            // Simple local transpose (can be optimized)
+            float temp = local_block[i * block_cols + j];
+            local_block[j * block_rows + i] = temp;
         }
     }
-
-    // Create the transposed block communicator
+    
+    // End timing
+    double end_time = MPI_Wtime();
+    *time = (long double)(end_time - start_time);
+    
+    // Create the transposed grid communicator (switch rows and columns)
     MPI_Comm transposed_grid_comm;
-    MPI_Cart_create(comm, 2, dims, periods, 1, &transposed_grid_comm);
-    MPI_Cart_coords(transposed_grid_comm, rank, 2, coords);
-
+    MPI_Cart_create(comm, 2, dims, periods, reorder, &transposed_grid_comm);
+    
     // Gather the transposed blocks back to the root
     float* transposed_flat = NULL;
     if(rank == 0) {
@@ -529,16 +551,12 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
             MPI_Abort(comm, EXIT_FAILURE);
         }
     }
-
-    MPI_Gatherv(local_block, block_size * block_size, MPI_FLOAT,
+    
+    MPI_Gatherv(local_block, block_rows * block_cols, MPI_FLOAT,
                 transposed_flat, send_counts, displs, block_type_resized,
                 0, transposed_grid_comm);
-
-    // Measure the end time
-    double end_time = MPI_Wtime();
-    *time = (long double)(end_time - start_time);
-
-    // Create the transposed 2D matrix on root
+    
+    // Reconstruct the transposed matrix on the root
     float** transposed = NULL;
     if(rank == 0) {
         transposed = create_2d_matrix(transposed_flat, n, n);
@@ -547,22 +565,24 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
             MPI_Abort(comm, EXIT_FAILURE);
         }
     }
-
+    
     // Cleanup
     free(local_block);
-    if(rank == 0) free(flat_matrix);
-    if(rank == 0) free(transposed_flat);
+    if(rank == 0) {
+        free(flat_matrix);
+        free(transposed_flat);
+    }
     MPI_Type_free(&block_type);
     MPI_Type_free(&block_type_resized);
     MPI_Comm_free(&grid_comm);
     MPI_Comm_free(&transposed_grid_comm);
-
+    
     // Debugging Print at End
     if (verbosity >= 2) {
         printf("Rank %d: block_cyclic_transpose_mpi completed successfully\n", rank);
         fflush(stdout);
     }
-
+    
     return transposed;
 }
 
