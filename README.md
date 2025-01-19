@@ -1,14 +1,14 @@
 ## Table of Contents
 
 - [Features](#features)
-- [Project Structure](#project structure)
+- [Project Structure](#project-structure)
 - [Installation](#installation)
-- [Building the Project](#building the project)
+- [Building the Project](#building-the-project)
 - [Usage](#usage)
   - [Configuration](#configuration)
-  - [Running the Benchmark](#running the benchmark)
-  - [Generating Plots](#generating plots)
-- [Code Overview](#code overview)
+  - [Running the Benchmark](#running-the-benchmark)
+  - [Generating Plots](#generating-plots)
+- [Code Overview](#code-overview)
 
 ## Features
 
