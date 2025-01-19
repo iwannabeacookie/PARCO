@@ -213,6 +213,7 @@ Once the benchmark completes, a CSV file named `benchmark_results.csv` is genera
   - **Sequential (`sequential.c` & `sequential.h`)**: Implements matrix operations without parallelization.
   - **OpenMP Parallel (`omp_parallel.c` & `omp_parallel.h`)**: Implements parallelized versions using OpenMP.
   - **Implicit Parallel (`implicit_parallel.c` & `implicit_parallel.h`)**: Utilizes compiler directives for implicit parallelization.
+  - **MPI Parallel (`mpi_parallel.c` & `mpi_parallel.h`)**: Implements parallelized versions using MPI.
   
 - **Configuration Management (`config.c` & `config.h`)**
   - Handles the parsing and management of configuration parameters.
