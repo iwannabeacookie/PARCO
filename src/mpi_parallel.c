@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 
 // Function to flatten the 2D matrix into a 1D array
 float* flatten_matrix(float** matrix, int n) {
