@@ -4,7 +4,7 @@
 #PBS -e ./parco-job.err
 #PBS -q short_cpuQ
 #PBS -l walltime=0:10:00
-#PBS -l select=1:ncpus=64:mem=1gb
+#PBS -l select=1:ncpus=64:mpiprocs=64:mem=1gb
 
 module load gcc91
 module load mpich-3.2.1--gcc-9.1.0
@@ -14,7 +14,7 @@ make all
 
 if [ -z "$flags" ]; then
   echo "Flags are not set, running full benchmark"
-  ./bin/out --benchmark-full
+  mpirun ./bin/out --benchmark-full
 else
-  ./bin/out $flags
+  mpirun ./bin/out $flags
 fi
