@@ -180,7 +180,7 @@ void init_config(int argc, char *argv[]) {
         config.MAX_BLOCK_SIZE = 256;
 
         config.MIN_OMP_THREADS = 2;
-        config.MAX_OMP_THREADS = 8;
+        config.MAX_OMP_THREADS = 64;
     }
 }
 
