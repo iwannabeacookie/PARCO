@@ -450,24 +450,28 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
     MPI_Comm grid_comm;
     
     // Determine grid dimensions
-    MPI_Dims_create(size, 2, dims); // MPI will set dims[0] and dims[1] such that dims[0]*dims[1]=size and the grid is as square as possible
-
+    MPI_Dims_create(size, 2, dims); // Automatically set dims[0] and dims[1] such that dims[0] * dims[1] = size
+    
     // Debugging Print
-    if (verbosity >= 2) {
-        if(rank == 0){
-            printf("Grid dimensions: %d x %d\n", dims[0], dims[1]);
-        }
+    if (verbosity >= 2 && rank == 0) {
+        printf("Computed grid dimensions: %d x %d (Total Processes: %d)\n", dims[0], dims[1], dims[0] * dims[1]);
     }
-
+    MPI_Barrier(comm); // Synchronize for clean output
+    
     // Create Cartesian topology
-    int periods[2] = {0, 0};
-    int reorder = 1;
+    int periods[2] = {0, 0}; // Non-periodic grid
+    int reorder = 1; // Allow MPI to reorder ranks
     int ierr = MPI_Cart_create(comm, 2, dims, periods, reorder, &grid_comm);
     if (ierr != MPI_SUCCESS) {
         fprintf(stderr, "Rank %d: Failed to create Cartesian topology.\n", rank);
         MPI_Abort(comm, ierr);
     }
-
+    
+    if (grid_comm == MPI_COMM_NULL) {
+        fprintf(stderr, "Rank %d: MPI_Cart_create returned MPI_COMM_NULL.\n", rank);
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+    
     // Get coordinates in the grid
     int coords[2];
     MPI_Cart_coords(grid_comm, rank, 2, coords);
@@ -523,24 +527,38 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
                 0, grid_comm);
     
     // Start timing
+    MPI_Barrier(grid_comm); // Synchronize before timing
     double start_time = MPI_Wtime();
     
     // Transpose the local block
+    // Allocate a temporary buffer for transposed block
+    float* temp_transposed = malloc(block_rows * block_cols * sizeof(float));
+    if (temp_transposed == NULL) {
+        fprintf(stderr, "Rank %d: Failed to allocate temp_transposed.\n", rank);
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+    
     for(int i = 0; i < block_rows; i++) {
         for(int j = 0; j < block_cols; j++) {
-            // Simple local transpose (can be optimized)
-            float temp = local_block[i * block_cols + j];
-            local_block[j * block_rows + i] = temp;
+            temp_transposed[j * block_rows + i] = local_block[i * block_cols + j];
         }
     }
+    
+    // Copy transposed data back to local_block
+    for(int i = 0; i < block_rows * block_cols; i++) {
+        local_block[i] = temp_transposed[i];
+    }
+    
+    free(temp_transposed);
     
     // End timing
     double end_time = MPI_Wtime();
     *time = (long double)(end_time - start_time);
     
     // Create the transposed grid communicator (switch rows and columns)
+    // Optional: Depending on how you want to gather the blocks, you might need to rearrange the grid
     MPI_Comm transposed_grid_comm;
-    MPI_Cart_create(comm, 2, dims, periods, reorder, &transposed_grid_comm);
+    // For simplicity, we'll use the same grid_comm here. Advanced implementations might require a different communicator.
     
     // Gather the transposed blocks back to the root
     float* transposed_flat = NULL;
@@ -554,7 +572,7 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
     
     MPI_Gatherv(local_block, block_rows * block_cols, MPI_FLOAT,
                 transposed_flat, send_counts, displs, block_type_resized,
-                0, transposed_grid_comm);
+                0, grid_comm);
     
     // Reconstruct the transposed matrix on the root
     float** transposed = NULL;
@@ -575,7 +593,7 @@ float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int ran
     MPI_Type_free(&block_type);
     MPI_Type_free(&block_type_resized);
     MPI_Comm_free(&grid_comm);
-    MPI_Comm_free(&transposed_grid_comm);
+    // No separate transposed_grid_comm in this simplified example
     
     // Debugging Print at End
     if (verbosity >= 2) {
