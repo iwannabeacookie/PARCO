@@ -191,20 +191,22 @@ void transpose_cache_oblivious_wrapper(long double* time) {
 }
 
 void is_symmetric_mpi_wrapper(long double* time) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     Config* cfg = get_config();
+
+    int rank, size;
+    MPI_Comm_rank(cfg->CURR_COMM, &rank);
+    MPI_Comm_size(cfg->CURR_COMM, &size);
+
     is_symmetric_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
 }
 
 void transpose_mpi_wrapper(long double* time) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     Config* cfg = get_config();
+
+    int rank, size;
+    MPI_Comm_rank(cfg->CURR_COMM, &rank);
+    MPI_Comm_size(cfg->CURR_COMM, &size);
+
     float** result = transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
 
     if (rank == 0) {
@@ -215,11 +217,12 @@ void transpose_mpi_wrapper(long double* time) {
 }
 
 void alltoall_transpose_mpi_wrapper(long double* time) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     Config* cfg = get_config();
+
+    int rank, size;
+    MPI_Comm_rank(cfg->CURR_COMM, &rank);
+    MPI_Comm_size(cfg->CURR_COMM, &size);
+
     float** result = alltoall_transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
 
     if (rank == 0) {
@@ -230,11 +233,12 @@ void alltoall_transpose_mpi_wrapper(long double* time) {
 }
 
 void block_cyclic_transpose_mpi_wrapper(long double* time) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     Config* cfg = get_config();
+
+    int rank, size;
+    MPI_Comm_rank(cfg->CURR_COMM, &rank);
+    MPI_Comm_size(cfg->CURR_COMM, &size);
+
     float** result = block_cyclic_transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
 
     if (rank == 0) {
@@ -245,11 +249,12 @@ void block_cyclic_transpose_mpi_wrapper(long double* time) {
 }
 
 void nonblocking_transpose_mpi_wrapper(long double* time) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     Config* cfg = get_config();
+
+    int rank, size;
+    MPI_Comm_rank(cfg->CURR_COMM, &rank);
+    MPI_Comm_size(cfg->CURR_COMM, &size);
+
     float** result = nonblocking_transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
 
     if (rank == 0) {
