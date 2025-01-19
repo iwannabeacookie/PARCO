@@ -80,7 +80,17 @@ int main(int argc, char *argv[]) {
                 if (cfg->VERBOSE_LEVEL > 0 && world_rank == 0) {
                     printf("\n %%- MPI All to All Transposition -%%\n");
                 }
-                benchmark_function(alltoall_transpose_mpi_wrapper, "transpose_mpi");
+                benchmark_function(alltoall_transpose_mpi_wrapper, "alltoall_transpose_mpi");
+
+                if (cfg->VERBOSE_LEVEL > 0 && world_rank == 0) {
+                    printf("\n %%- MPI Block Cyclic Transposition -%%\n");
+                }
+                benchmark_function(block_cyclic_transpose_mpi_wrapper, "block_cyclic_transpose_mpi");
+
+                if (cfg->VERBOSE_LEVEL > 0 && world_rank == 0) {
+                    printf("\n %%- MPI Nonblocking Transposition -%%\n");
+                }
+                benchmark_function(nonblocking_transpose_mpi_wrapper, "nonblocking_transpose_mpi");
 
                 // if (cfg->VERBOSE_LEVEL > 0 && world_rank == 0) {
                 //     printf("\n %%- MPI Transposition with 2D Decomposition -%%\n");

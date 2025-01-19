@@ -210,6 +210,8 @@ void transpose_mpi_wrapper(long double* time) {
     if (rank == 0) {
         deallocate_matrix(result, cfg->MATRIX_DIMENSION);
     }
+
+    MPI_Barrier(cfg->CURR_COMM);
 }
 
 void alltoall_transpose_mpi_wrapper(long double* time) {
@@ -223,4 +225,36 @@ void alltoall_transpose_mpi_wrapper(long double* time) {
     if (rank == 0) {
         deallocate_matrix(result, cfg->MATRIX_DIMENSION);
     }
+
+    MPI_Barrier(cfg->CURR_COMM);
+}
+
+void block_cyclic_transpose_mpi_wrapper(long double* time) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    Config* cfg = get_config();
+    float** result = block_cyclic_transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
+
+    if (rank == 0) {
+        deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+    }
+
+    MPI_Barrier(cfg->CURR_COMM);
+}
+
+void nonblocking_transpose_mpi_wrapper(long double* time) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    Config* cfg = get_config();
+    float** result = nonblocking_transpose_mpi(cfg->CURR_COMM, cfg->MATRIX, cfg->MATRIX_DIMENSION, rank, size, time, cfg->VERBOSE_LEVEL);
+
+    if (rank == 0) {
+        deallocate_matrix(result, cfg->MATRIX_DIMENSION);
+    }
+
+    MPI_Barrier(cfg->CURR_COMM);
 }

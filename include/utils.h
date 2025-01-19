@@ -45,4 +45,8 @@ void transpose_mpi_wrapper(long double* time);
 
 void alltoall_transpose_mpi_wrapper(long double* time);
 
+void block_cyclic_transpose_mpi_wrapper(long double* time);
+
+void nonblocking_transpose_mpi_wrapper(long double* time);
+
 #endif // !UTILS_H

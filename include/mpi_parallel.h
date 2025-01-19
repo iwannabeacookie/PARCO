@@ -10,4 +10,8 @@ float** transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, 
 
 float** alltoall_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, long double* time, int verbosity);
 
+float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, long double* time, int verbosity);
+
+float** nonblocking_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, long double* time, int verbosity);
+
 #endif // !MPI_PARALLEL_H

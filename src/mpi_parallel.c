@@ -443,3 +443,244 @@ float** alltoall_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, i
 
     return transposed;
 }
+
+float** block_cyclic_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, long double* time, int verbosity) {
+    int dims[2], periods[2] = {0, 0}, coords[2];
+    MPI_Comm grid_comm;
+    
+    // Determine grid dimensions (assuming sqrt(size) is integer)
+    dims[0] = dims[1] = (int)sqrt(size);
+    if(dims[0] * dims[1] != size) {
+        if(rank == 0) {
+            fprintf(stderr, "Number of processes must be a perfect square.\n");
+        }
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+
+    // Create Cartesian topology
+    MPI_Cart_create(comm, 2, dims, periods, 0, &grid_comm);
+    MPI_Cart_coords(grid_comm, rank, 2, coords);
+
+    // Define block size
+    int block_size = n / dims[0]; // Assuming n is divisible by dims[0]
+
+    // Allocate local block
+    float* local_block = malloc(block_size * block_size * sizeof(float));
+    if (local_block == NULL) {
+        fprintf(stderr, "Rank %d: Failed to allocate local_block.\n", rank);
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+
+    // Only root process flattens the matrix
+    float* flat_matrix = NULL;
+    if(rank == 0) {
+        flat_matrix = flatten_matrix(matrix, n);
+        if (flat_matrix == NULL) {
+            fprintf(stderr, "Rank %d: Failed to flatten the matrix.\n", rank);
+            MPI_Abort(comm, EXIT_FAILURE);
+        }
+    }
+
+    // Scatter blocks to all processes
+    MPI_Datatype block_type, block_type_resized;
+    MPI_Type_create_subarray(2, (int[]){n, n}, (int[]){block_size, block_size},
+                            (int[]){coords[0] * block_size, coords[1] * block_size},
+                            MPI_ORDER_C, MPI_FLOAT, &block_type);
+    MPI_Type_create_resized(block_type, 0, sizeof(float), &block_type_resized);
+    MPI_Type_commit(&block_type_resized);
+
+    int send_counts[size];
+    int displs[size];
+    if(rank == 0) {
+        for(int i = 0; i < size; i++) {
+            displs[i] = i;
+            send_counts[i] = 1;
+        }
+    }
+
+    MPI_Scatterv(flat_matrix, send_counts, displs, block_type_resized,
+                 local_block, block_size * block_size, MPI_FLOAT,
+                 0, grid_comm);
+
+    // Measure the start time
+    double start_time = MPI_Wtime();
+
+    // Transpose the local block
+    for(int i = 0; i < block_size; i++) {
+        for(int j = i+1; j < block_size; j++) {
+            float temp = local_block[i * block_size + j];
+            local_block[i * block_size + j] = local_block[j * block_size + i];
+            local_block[j * block_size + i] = temp;
+        }
+    }
+
+    // Create the transposed block communicator
+    MPI_Comm transposed_grid_comm;
+    MPI_Cart_create(comm, 2, dims, periods, 1, &transposed_grid_comm);
+    MPI_Cart_coords(transposed_grid_comm, rank, 2, coords);
+
+    // Gather the transposed blocks back to the root
+    float* transposed_flat = NULL;
+    if(rank == 0) {
+        transposed_flat = malloc(n * n * sizeof(float));
+        if (transposed_flat == NULL) {
+            fprintf(stderr, "Root Rank %d: Failed to allocate transposed_flat.\n", rank);
+            MPI_Abort(comm, EXIT_FAILURE);
+        }
+    }
+
+    MPI_Gatherv(local_block, block_size * block_size, MPI_FLOAT,
+                transposed_flat, send_counts, displs, block_type_resized,
+                0, transposed_grid_comm);
+
+    // Measure the end time
+    double end_time = MPI_Wtime();
+    *time = (long double)(end_time - start_time);
+
+    // Create the transposed 2D matrix on root
+    float** transposed = NULL;
+    if(rank == 0) {
+        transposed = create_2d_matrix(transposed_flat, n, n);
+        if (transposed == NULL) {
+            fprintf(stderr, "Root Rank %d: Failed to create transposed matrix.\n", rank);
+            MPI_Abort(comm, EXIT_FAILURE);
+        }
+    }
+
+    // Cleanup
+    free(local_block);
+    if(rank == 0) free(flat_matrix);
+    if(rank == 0) free(transposed_flat);
+    MPI_Type_free(&block_type);
+    MPI_Type_free(&block_type_resized);
+    MPI_Comm_free(&grid_comm);
+    MPI_Comm_free(&transposed_grid_comm);
+
+    // Debugging Print at End
+    if (verbosity >= 2) {
+        printf("Rank %d: block_cyclic_transpose_mpi completed successfully\n", rank);
+        fflush(stdout);
+    }
+
+    return transposed;
+}
+
+float** nonblocking_transpose_mpi(MPI_Comm comm, float** matrix, int n, int rank, int size, long double* time, int verbosity) {
+    float* flat_matrix = NULL;
+    float* transposed_flat = NULL;
+
+    // Enhanced Debugging Print
+    if (verbosity >= 2) {
+        printf("Rank %d: Starting nonblocking_transpose_mpi\n", rank);
+        fflush(stdout);
+    }
+
+    // Only root process flattens the matrix
+    if(rank == 0) {
+        flat_matrix = flatten_matrix(matrix, n);
+        if (flat_matrix == NULL) {
+            fprintf(stderr, "Rank %d: Failed to flatten the matrix.\n", rank);
+            MPI_Abort(comm, EXIT_FAILURE);
+        }
+    }
+
+    // Broadcast the flattened matrix size to all processes
+    MPI_Bcast(&n, 1, MPI_INT, 0, comm);
+
+    // Determine the number of rows per process
+    int rows_per_proc = n / size;
+    // No remainder due to n divisible by size and both being powers of two
+
+    // Allocate memory for the local chunk
+    float* local_matrix = malloc(rows_per_proc * n * sizeof(float));
+    if (local_matrix == NULL) {
+        fprintf(stderr, "Rank %d: Failed to allocate local_matrix.\n", rank);
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+
+    // Non-blocking scatter
+    MPI_Request scatter_req;
+    MPI_Iscatter(flat_matrix, rows_per_proc * n, MPI_FLOAT,
+                local_matrix, rows_per_proc * n, MPI_FLOAT,
+                0, comm, &scatter_req);
+
+    // Start computation (if any pre-processing is needed)
+    // For simplicity, we assume computation starts after initiating scatter
+
+    // Wait for scatter to complete
+    MPI_Wait(&scatter_req, MPI_STATUS_IGNORE);
+
+    // Allocate memory for the local transposed chunk
+    float* local_transposed = malloc(rows_per_proc * n * sizeof(float));
+    if (local_transposed == NULL) {
+        fprintf(stderr, "Rank %d: Failed to allocate local_transposed.\n", rank);
+        MPI_Abort(comm, EXIT_FAILURE);
+    }
+
+    // Start non-blocking computation: transpose local chunk
+    // Note: Actual overlapping depends on the hardware and MPI library
+    MPI_Request transpose_req;
+    MPI_Request compute_req;
+    // For demonstration, we'll simulate overlapping by transposing in a separate thread
+    // However, in pure MPI C, true overlapping would require pthreads or similar
+    // Here, we'll proceed with the standard approach for simplicity
+
+    // Measure the start time
+    double start_time = MPI_Wtime();
+
+    // Perform local transpose
+    for(int i = 0; i < rows_per_proc; i++) {
+        for(int j = 0; j < n; j++) {
+            local_transposed[j * rows_per_proc + i] = local_matrix[i * n + j];
+        }
+    }
+
+    // Measure the end time
+    double end_time = MPI_Wtime();
+    *time = (long double)(end_time - start_time);
+
+    // Allocate memory for the transposed flat matrix on root
+    if(rank == 0) {
+        transposed_flat = malloc(n * n * sizeof(float));
+        if (transposed_flat == NULL) {
+            fprintf(stderr, "Root Rank %d: Failed to allocate transposed_flat.\n", rank);
+            MPI_Abort(comm, EXIT_FAILURE);
+        }
+    }
+
+    // Non-blocking gather
+    MPI_Request gather_req;
+    MPI_Igather(local_transposed, rows_per_proc * n, MPI_FLOAT,
+                transposed_flat, rows_per_proc * n, MPI_FLOAT,
+                0, comm, &gather_req);
+
+    // Continue with other computations if needed while gather is in progress
+
+    // Wait for gather to complete
+    MPI_Wait(&gather_req, MPI_STATUS_IGNORE);
+
+    // Root process reconstructs the transposed matrix
+    float** transposed = NULL;
+    if(rank == 0) {
+        transposed = create_2d_matrix(transposed_flat, n, n);
+        if (transposed == NULL) {
+            fprintf(stderr, "Root Rank %d: Failed to create transposed matrix.\n", rank);
+            MPI_Abort(comm, EXIT_FAILURE);
+        }
+        // Free flattened arrays
+        free(flat_matrix);
+        free(transposed_flat);
+    }
+
+    // Cleanup
+    free(local_matrix);
+    free(local_transposed);
+
+    // Debugging Print at End
+    if (verbosity >= 2) {
+        printf("Rank %d: nonblocking_transpose_mpi completed successfully\n", rank);
+        fflush(stdout);
+    }
+
+    return transposed;
+}
