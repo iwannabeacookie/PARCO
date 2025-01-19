@@ -2,13 +2,13 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 from matplotlib import cm
+from itertools import cycle
 
 def plot_speedup(df, output_dir):
     """
-    Plots a 2D scatter plot comparing the speedup of the best runtimes of each function
-    relative to the sequential function against the matrix size.
+    Plots a 2D line plot comparing the speedup of each parallel function relative to the sequential function
+    against the matrix size.
 
     Parameters:
     - df: A DataFrame containing the benchmark results.
@@ -18,36 +18,41 @@ def plot_speedup(df, output_dir):
     unwanted_funcs = ['is_symmetric_sequential', 'is_symmetric_implicit', 'is_symmetric_omp']
     df_filtered = df[~df['func_name'].isin(unwanted_funcs)]
 
-    # Get the best runtime for each function and matrix size
+    # Get the best (minimum) runtime for each function and matrix size
     idx = df_filtered.groupby(['matrix_dimension', 'func_name'])['time'].idxmin()
     best_runtimes = df_filtered.loc[idx].reset_index(drop=True)
 
     # Get the best runtime for the sequential function for each matrix size
-    sequential_runtimes = df_filtered[df_filtered['func_name'] == 'transpose_sequential'].groupby('matrix_dimension')['time'].min().reset_index()
+    sequential_runtimes = df_filtered[df_filtered['func_name'] == 'transpose_sequential'] \
+                            .groupby('matrix_dimension')['time'].min().reset_index()
     sequential_runtimes.rename(columns={'time': 'time_sequential'}, inplace=True)
 
     # Merge the best runtimes with the sequential runtimes
     merged = pd.merge(best_runtimes, sequential_runtimes, on='matrix_dimension')
 
+    # Handle potential zero or undefined runtimes by replacing them with a very small number
+    merged['time'] = merged['time'].replace(0, merged['time'][merged['time'] > 0].min())
+    merged['time_sequential'] = merged['time_sequential'].replace(0, merged['time_sequential'][merged['time_sequential'] > 0].min())
+
     # Calculate the speedup
     merged['speedup'] = merged['time_sequential'] / merged['time']
 
-    # Define markers for different functions
-    markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'd', '|', '_']
-    func_names = merged['func_name'].unique()
-    marker_dict = {func_name: markers[i % len(markers)] for i, func_name in enumerate(func_names)}
+    # Define a color cycle with enough distinct colors using tab20 colormap
+    color_cycle = cycle(cm.tab20.colors)  # tab20 has 20 distinct colors
 
-    # Plot the speedup
-    plt.figure(figsize=(10, 6))
-    for func_name in func_names:
-        subset = merged[merged['func_name'] == func_name]
-        plt.scatter(subset['matrix_dimension'], subset['speedup'],
-                    label=func_name, marker=marker_dict[func_name])
+    plt.figure(figsize=(12, 8))
+
+    for func_name, group in merged.groupby('func_name'):
+        color = next(color_cycle)
+        # Sort by matrix_dimension to ensure lines connect correctly
+        group_sorted = group.sort_values('matrix_dimension')
+        plt.plot(group_sorted['matrix_dimension'], group_sorted['speedup'],
+                 marker='o', label=func_name, color=color, linestyle='-')
 
     plt.xscale('log', base=2)
     plt.xlabel('Matrix Dimension (log scale)')
     plt.ylabel('Speedup')
-    plt.title('Speedup of Best Runtimes Relative to Sequential Function')
+    plt.title('Speedup of Parallel Functions Relative to Sequential Function')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
 
@@ -62,7 +67,7 @@ def plot_speedup(df, output_dir):
 def plot_strong_scaling(df, output_dir):
     """
     Plots strong scaling analysis showing how execution time decreases with increasing number of threads
-    for a fixed matrix size.
+    for a fixed matrix size, excluding the sequential implementation.
 
     Parameters:
     - df: A DataFrame containing the benchmark results.
@@ -81,26 +86,38 @@ def plot_strong_scaling(df, output_dir):
         print(f"No parallel implementations found for matrix size {fixed_matrix_size}. Skipping strong scaling plot.")
         return
 
-    # Get the best runtime for each function based on threads
+    # Get the best (minimum) runtime for each function based on threads
     idx = parallel_df.groupby(['func_name', 'threads'])['time'].idxmin()
     best_parallel = parallel_df.loc[idx].reset_index(drop=True)
 
-    # Use parallel implementation with threads=1 as the baseline for each function
-    baseline = best_parallel[best_parallel['threads'] == 1].rename(columns={'time': 'time_baseline'})
-    baseline = baseline[['func_name', 'time_baseline']]
+    # Assume that for strong scaling, threads=1 within parallel implementations are the baseline
+    baseline = best_parallel[best_parallel['threads'] == 1][['func_name', 'time']]
+    baseline.rename(columns={'time': 'time_baseline'}, inplace=True)
 
     # Merge baseline with best_parallel
-    merged = pd.merge(best_parallel, baseline, on='func_name')
+    merged = pd.merge(best_parallel, baseline, on='func_name', how='left')
+
+    # Replace any missing baseline times with the smallest non-zero time in the dataset
+    merged['time_baseline'] = merged['time_baseline'].fillna(merged['time_baseline'].replace(0, merged['time_baseline'][merged['time_baseline'] > 0].min()))
 
     # Calculate speedup and efficiency
     merged['speedup'] = merged['time_baseline'] / merged['time']
     merged['efficiency'] = merged['speedup'] / merged['threads']
 
+    # Handle potential zero or undefined efficieny
+    merged['efficiency'] = merged['efficiency'].replace([np.inf, -np.inf], np.nan)
+    merged = merged.dropna(subset=['speedup', 'efficiency'])
+
+    # Define a color cycle with enough distinct colors using tab20 colormap
+    color_cycle = cycle(cm.tab20.colors)
+
     # Plot Execution Time vs Number of Threads
-    plt.figure(figsize=(10, 6))
-    for func_name in merged['func_name'].unique():
-        subset = merged[merged['func_name'] == func_name]
-        plt.plot(subset['threads'], subset['time'], marker='o', label=func_name)
+    plt.figure(figsize=(12, 8))
+    for func_name, group in merged.groupby('func_name'):
+        color = next(color_cycle)
+        group_sorted = group.sort_values('threads')
+        plt.plot(group_sorted['threads'], group_sorted['time'],
+                 marker='o', label=func_name, color=color, linestyle='-')
 
     plt.xscale('log', base=2)
     plt.yscale('log', base=10)
@@ -109,6 +126,7 @@ def plot_strong_scaling(df, output_dir):
     plt.title(f'Strong Scaling for Matrix Dimension {fixed_matrix_size}')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
+
     plt.xticks(ticks=sorted(merged['threads'].unique()),
                labels=sorted(merged['threads'].unique()), rotation=45)
 
@@ -116,11 +134,16 @@ def plot_strong_scaling(df, output_dir):
     plt.savefig(os.path.join(output_dir, 'strong_scaling_execution_time.png'), bbox_inches='tight')
     plt.close()
 
+    # Reset color cycle for the next plot to maintain distinct colors
+    color_cycle = cycle(cm.tab20.colors)
+
     # Plot Speedup vs Number of Threads
-    plt.figure(figsize=(10, 6))
-    for func_name in merged['func_name'].unique():
-        subset = merged[merged['func_name'] == func_name]
-        plt.plot(subset['threads'], subset['speedup'], marker='o', label=func_name)
+    plt.figure(figsize=(12, 8))
+    for func_name, group in merged.groupby('func_name'):
+        color = next(color_cycle)
+        group_sorted = group.sort_values('threads')
+        plt.plot(group_sorted['threads'], group_sorted['speedup'],
+                 marker='o', label=func_name, color=color, linestyle='-')
 
     plt.xscale('log', base=2)
     plt.xlabel('Number of Threads (log scale)')
@@ -128,17 +151,23 @@ def plot_strong_scaling(df, output_dir):
     plt.title(f'Strong Scaling Speedup for Matrix Dimension {fixed_matrix_size}')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
+
     plt.xticks(ticks=sorted(merged['threads'].unique()),
                labels=sorted(merged['threads'].unique()), rotation=45)
 
     plt.savefig(os.path.join(output_dir, 'strong_scaling_speedup.png'), bbox_inches='tight')
     plt.close()
 
+    # Reset color cycle for the next plot to maintain distinct colors
+    color_cycle = cycle(cm.tab20.colors)
+
     # Plot Efficiency vs Number of Threads
-    plt.figure(figsize=(10, 6))
-    for func_name in merged['func_name'].unique():
-        subset = merged[merged['func_name'] == func_name]
-        plt.plot(subset['threads'], subset['efficiency'], marker='o', label=func_name)
+    plt.figure(figsize=(12, 8))
+    for func_name, group in merged.groupby('func_name'):
+        color = next(color_cycle)
+        group_sorted = group.sort_values('threads')
+        plt.plot(group_sorted['threads'], group_sorted['efficiency'],
+                 marker='o', label=func_name, color=color, linestyle='-')
 
     plt.xscale('log', base=2)
     plt.xlabel('Number of Threads (log scale)')
@@ -146,6 +175,7 @@ def plot_strong_scaling(df, output_dir):
     plt.title(f'Strong Scaling Efficiency for Matrix Dimension {fixed_matrix_size}')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
+
     plt.xticks(ticks=sorted(merged['threads'].unique()),
                labels=sorted(merged['threads'].unique()), rotation=45)
 
@@ -162,8 +192,6 @@ def plot_weak_scaling(df, output_dir):
     - output_dir: Directory where the plot will be saved.
     """
     # Assuming weak scaling: matrix_dimension ∝ threads
-    # Since matrix_dimension and threads scale exponentially with base 2, we can pair them accordingly
-
     # Calculate the problem size per thread
     df_sorted = df.sort_values(by=['threads', 'matrix_dimension']).copy()
     df_sorted['problem_size_per_thread'] = df_sorted['matrix_dimension'] / df_sorted['threads']
@@ -181,19 +209,27 @@ def plot_weak_scaling(df, output_dir):
 
     # Exclude sequential function
     parallel_df = weak_scaling_df[~weak_scaling_df['func_name'].isin(['transpose_sequential'])]
-
     if parallel_df.empty:
         print("No parallel implementations found for weak scaling analysis.")
         return
 
-    # Aggregate execution time by function and threads (mean)
-    best_parallel = parallel_df.groupby(['func_name', 'threads'])['time'].mean().reset_index()
+    # Get the best (minimum) runtime for each function and thread count
+    idx = parallel_df.groupby(['func_name', 'threads'])['time'].idxmin()
+    best_parallel = parallel_df.loc[idx].reset_index(drop=True)
+
+    # Handle potential zero runtimes by replacing them with the smallest non-zero time in the dataset
+    best_parallel['time'] = best_parallel['time'].replace(0, best_parallel['time'][best_parallel['time'] > 0].min())
+
+    # Define a color cycle with enough distinct colors using tab20 colormap
+    color_cycle = cycle(cm.tab20.colors)
 
     # Plot Execution Time vs Number of Threads
-    plt.figure(figsize=(10, 6))
-    for func_name in best_parallel['func_name'].unique():
-        subset = best_parallel[best_parallel['func_name'] == func_name]
-        plt.plot(subset['threads'], subset['time'], marker='o', label=func_name)
+    plt.figure(figsize=(12, 8))
+    for func_name, group in best_parallel.groupby('func_name'):
+        color = next(color_cycle)
+        group_sorted = group.sort_values('threads')
+        plt.plot(group_sorted['threads'], group_sorted['time'],
+                 marker='o', label=func_name, color=color, linestyle='-')
 
     plt.xscale('log', base=2)
     plt.yscale('log', base=10)
@@ -202,22 +238,13 @@ def plot_weak_scaling(df, output_dir):
     plt.title('Weak Scaling Execution Time')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
+
     plt.xticks(ticks=sorted(best_parallel['threads'].unique()),
                labels=sorted(best_parallel['threads'].unique()), rotation=45)
 
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(os.path.join(output_dir, 'weak_scaling_execution_time.png'), bbox_inches='tight')
     plt.close()
-
-def plot_weak_scaling_additional_metrics(df, output_dir):
-    """
-    Plots additional metrics (speedup and scalability) for weak scaling.
-
-    Note: Weak scaling speedup and scalability metrics are not standard and can be misleading.
-    It's recommended to focus on execution time for weak scaling.
-    """
-    # Weak scaling speedup and scalability are not meaningful; hence, we skip these plots.
-    print("Weak scaling speedup and scalability plots are not generated as they are not meaningful metrics.")
 
 def plot_2d_execution_time(df, output_dir):
     """
@@ -229,20 +256,28 @@ def plot_2d_execution_time(df, output_dir):
     """
     functions = ['transpose_implicit', 'transpose_sequential', 'transpose_mpi']
 
+    # Define a color cycle with enough distinct colors
+    color_cycle = cycle(cm.tab20.colors)
+
     for func in functions:
         subset = df[df['func_name'] == func]
 
-        # Aggregate data to avoid multiple points for the same matrix_dimension
-        aggregated = subset.groupby('matrix_dimension')['time'].mean().reset_index()
+        if subset.empty:
+            print(f"No data available for function {func}. Skipping plot.")
+            continue
 
-        plt.figure(figsize=(10, 6))
+        # Aggregate data to avoid multiple points for the same matrix_dimension
+        aggregated = subset.groupby('matrix_dimension')['time'].min().reset_index()
+
+        plt.figure(figsize=(12, 8))
+        color = next(color_cycle)
         plt.plot(aggregated['matrix_dimension'], aggregated['time'],
-                 marker='o', label=func)
+                 marker='o', label=func, color=color, linestyle='-')
 
         plt.xscale('log', base=2)
         plt.yscale('log', base=10)
         plt.xlabel('Matrix Dimension (log scale)')
-        plt.ylabel('Time (ms, log scale)')
+        plt.ylabel('Execution Time (ms, log scale)')
         plt.title(f'Execution Time vs Matrix Dimension for {func}')
         plt.legend()
         plt.grid(True, which="both", ls="--", linewidth=0.5)
@@ -260,24 +295,37 @@ def plot_2d_execution_time(df, output_dir):
     sequential = df[df['func_name'] == 'transpose_sequential']
     mpi = df[df['func_name'] == 'transpose_mpi']
 
+    if sequential.empty:
+        print("No sequential data available for speedup comparison. Skipping speedup plot.")
+        return
+
     # Aggregate data to avoid multiple entries for the same matrix_dimension
-    implicit_avg = implicit.groupby('matrix_dimension')['time'].mean().reset_index()
-    sequential_avg = sequential.groupby('matrix_dimension')['time'].mean().reset_index()
-    mpi_avg = mpi.groupby('matrix_dimension')['time'].mean().reset_index()
+    implicit_avg = implicit.groupby('matrix_dimension')['time'].min().reset_index()
+    sequential_avg = sequential.groupby('matrix_dimension')['time'].min().reset_index()
+    mpi_avg = mpi.groupby('matrix_dimension')['time'].min().reset_index()
 
     # Merge the dataframes
-    merged = pd.merge(implicit_avg, sequential_avg, on='matrix_dimension', suffixes=('_implicit', '_sequential'))
-    merged = pd.merge(merged, mpi_avg, on='matrix_dimension', suffixes=('', '_mpi'))
+    merged = pd.merge(implicit_avg, sequential_avg, on='matrix_dimension', how='left', suffixes=('_implicit', '_sequential'))
+    merged = pd.merge(merged, mpi_avg, on='matrix_dimension', how='left', suffixes=('', '_mpi'))
+
+    # Replace zero runtimes with the smallest non-zero time to avoid division issues
+    merged['time_implicit'] = merged['time_implicit'].replace(0, merged['time_implicit'][merged['time_implicit'] > 0].min())
+    merged['time'] = merged['time'].replace(0, merged['time'][merged['time'] > 0].min())
 
     # Calculate speedups
     merged['speedup_implicit'] = merged['time_sequential'] / merged['time_implicit']
     merged['speedup_mpi'] = merged['time_sequential'] / merged['time']
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(merged['matrix_dimension'], merged['speedup_implicit'],
-             marker='o', label='Speedup (Implicit vs Sequential)')
-    plt.plot(merged['matrix_dimension'], merged['speedup_mpi'],
-             marker='s', label='Speedup (MPI vs Sequential)')
+    # Define a color cycle with enough distinct colors
+    color_cycle_speedup = cycle(cm.tab20.colors)
+
+    plt.figure(figsize=(12, 8))
+    if 'speedup_implicit' in merged.columns:
+        plt.plot(merged['matrix_dimension'], merged['speedup_implicit'],
+                 marker='o', label='Speedup (Implicit vs Sequential)', color=next(color_cycle_speedup), linestyle='-')
+    if 'speedup_mpi' in merged.columns:
+        plt.plot(merged['matrix_dimension'], merged['speedup_mpi'],
+                 marker='s', label='Speedup (MPI vs Sequential)', color=next(color_cycle_speedup), linestyle='-')
 
     plt.xscale('log', base=2)
     plt.xlabel('Matrix Dimension (log scale)')
@@ -286,7 +334,7 @@ def plot_2d_execution_time(df, output_dir):
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
 
-    # Set x-tick labels to the encountered matrix dimensions
+    # Set x-tick labels
     plt.xticks(ticks=sorted(merged['matrix_dimension'].unique()),
                labels=sorted(merged['matrix_dimension'].unique()), rotation=45)
 
@@ -310,20 +358,28 @@ def plot_mpi_2d_execution_time(df, output_dir):
         'nonblocking_transpose_mpi'
     ]
 
+    # Define a color cycle with enough distinct colors
+    color_cycle = cycle(cm.tab20.colors)
+
     for func in mpi_functions:
         subset = df[df['func_name'] == func]
 
-        # Aggregate data to avoid multiple points for the same matrix_dimension
-        aggregated = subset.groupby('matrix_dimension')['time'].mean().reset_index()
+        if subset.empty:
+            print(f"No data available for MPI function {func}. Skipping plot.")
+            continue
 
-        plt.figure(figsize=(10, 6))
+        # Aggregate data to avoid multiple points for the same matrix_dimension
+        aggregated = subset.groupby('matrix_dimension')['time'].min().reset_index()
+
+        plt.figure(figsize=(12, 8))
+        color = next(color_cycle)
         plt.plot(aggregated['matrix_dimension'], aggregated['time'],
-                 marker='o', label=func)
+                 marker='o', label=func, color=color, linestyle='-')
 
         plt.xscale('log', base=2)
         plt.yscale('log', base=10)
         plt.xlabel('Matrix Dimension (log scale)')
-        plt.ylabel('Time (ms, log scale)')
+        plt.ylabel('Execution Time (ms, log scale)')
         plt.title(f'Execution Time vs Matrix Dimension for {func}')
         plt.legend()
         plt.grid(True, which="both", ls="--", linewidth=0.5)
@@ -347,25 +403,44 @@ def plot_additional_metrics(df, output_dir):
     # Define parallel functions (excluding sequential)
     parallel_funcs = df[~df['func_name'].isin(['transpose_sequential'])]['func_name'].unique()
 
+    # Define a color cycle with enough distinct colors
+    color_cycle = cycle(cm.tab20.colors)
+
     for func in parallel_funcs:
         subset = df[df['func_name'] == func]
 
-        # Use parallel implementation with threads=1 as the baseline
-        baseline_df = subset[subset['threads'] == 1]
-        if baseline_df.empty:
+        # Identify if the implementation is MPI or OMP based on func_name
+        # Here, we assume 'mpi' in func_name indicates MPI implementation
+        if 'mpi' in func.lower():
+            # For MPI, use threads=1 as baseline (assuming threads represent processes here)
+            baseline = subset[subset['threads'] == 1]
+        else:
+            # For OMP, use threads=1 as baseline
+            baseline = subset[subset['threads'] == 1]
+
+        if baseline.empty:
             print(f"No baseline (threads=1) found for function {func}. Skipping efficiency plot.")
             continue
-        baseline_time = baseline_df['time'].min()
 
-        # Aggregate data by threads to compute speedup and efficiency
+        baseline_time = baseline['time'].min()
+
+        # Aggregate by threads, taking the min time to represent best case
         aggregated = subset.groupby('threads')['time'].min().reset_index()
+
+        # Handle potential zero runtimes by replacing them with the smallest non-zero time
+        aggregated['time'] = aggregated['time'].replace(0, aggregated['time'][aggregated['time'] > 0].min())
+
+        # Calculate speedup and efficiency
         aggregated['speedup'] = baseline_time / aggregated['time']
         aggregated['efficiency'] = aggregated['speedup'] / aggregated['threads']
 
+        # Define a color cycle reset to ensure distinct colors
+        color = next(color_cycle)
+
         # Plot Efficiency vs Number of Threads
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(12, 8))
         plt.plot(aggregated['threads'], aggregated['efficiency'],
-                 marker='o', label='Efficiency')
+                 marker='o', label='Efficiency', color=color, linestyle='-')
 
         plt.xscale('log', base=2)
         plt.xlabel('Number of Threads (log scale)')
@@ -388,6 +463,11 @@ def main():
     except FileNotFoundError:
         print("The file 'benchmark_results.csv' was not found.")
         return
+
+    # Replace zero runtime measurements with the smallest non-zero runtime to avoid plotting zeros
+    df['time'] = df['time'].replace(0, np.nan)
+    min_non_zero_time = df['time'].min()
+    df['time'] = df['time'].fillna(min_non_zero_time)
 
     # Ensure that data types are correct
     df['threads'] = df['threads'].astype(int)
@@ -417,11 +497,8 @@ def main():
     # Plot Strong Scaling
     plot_strong_scaling(df, strong_scaling_dir)
 
-    # Plot Weak Scaling
+    # Plot Weak Scaling Execution Time Only
     plot_weak_scaling(df, weak_scaling_dir)
-
-    # Note: Weak scaling speedup and scalability metrics are not meaningful and hence are not plotted
-    # plot_weak_scaling_additional_metrics(df, weak_scaling_dir)
 
     # Plot Additional Metrics (Efficiency)
     plot_additional_metrics(df, additional_metrics_dir)
