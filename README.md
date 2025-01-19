@@ -13,9 +13,9 @@
 ## Features
 
 - **Matrix Operations**: Initialize, transpose, and check the symmetry of matrices.
-- **Parallel Computing**: Utilize OpenMP for multi-threaded execution to enhance performance.
+- **Parallel Computing**: Utilize OpenMP and MPI for multi-threaded execution to enhance performance.
 - **Benchmarking**: Measure and compare the performance of various matrix operation implementations.
-- **Visualization**: Generate 2D and 3D plots to visualize benchmark results and speedups.
+- **Visualization**: Generate 2D plots to visualize benchmark results and speedups.
 - **Configurability**: Easily adjust matrix dimensions, thread counts, block sizes, and verbosity levels via configuration.
 
 ## Project Structure
