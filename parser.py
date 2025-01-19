@@ -85,21 +85,21 @@ def plot_strong_scaling(df, output_dir):
     idx = parallel_df.groupby(['func_name', 'threads'])['time'].idxmin()
     best_parallel = parallel_df.loc[idx].reset_index(drop=True)
 
-    # Get the baseline sequential runtime for speedup calculations
-    sequential_time_series = strong_df[strong_df['func_name'] == 'transpose_sequential']['time']
-    if sequential_time_series.empty:
-        print(f"No sequential runtime found for matrix size {fixed_matrix_size}. Skipping speedup and efficiency calculations.")
-        return
-    sequential_time = sequential_time_series.min()
+    # Use parallel implementation with threads=1 as the baseline for each function
+    baseline = best_parallel[best_parallel['threads'] == 1].rename(columns={'time': 'time_baseline'})
+    baseline = baseline[['func_name', 'time_baseline']]
+
+    # Merge baseline with best_parallel
+    merged = pd.merge(best_parallel, baseline, on='func_name')
 
     # Calculate speedup and efficiency
-    best_parallel['speedup'] = sequential_time / best_parallel['time']
-    best_parallel['efficiency'] = best_parallel['speedup'] / best_parallel['threads']
+    merged['speedup'] = merged['time_baseline'] / merged['time']
+    merged['efficiency'] = merged['speedup'] / merged['threads']
 
     # Plot Execution Time vs Number of Threads
     plt.figure(figsize=(10, 6))
-    for func_name in best_parallel['func_name'].unique():
-        subset = best_parallel[best_parallel['func_name'] == func_name]
+    for func_name in merged['func_name'].unique():
+        subset = merged[merged['func_name'] == func_name]
         plt.plot(subset['threads'], subset['time'], marker='o', label=func_name)
 
     plt.xscale('log', base=2)
@@ -109,8 +109,8 @@ def plot_strong_scaling(df, output_dir):
     plt.title(f'Strong Scaling for Matrix Dimension {fixed_matrix_size}')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
-    plt.xticks(ticks=sorted(best_parallel['threads'].unique()),
-               labels=sorted(best_parallel['threads'].unique()), rotation=45)
+    plt.xticks(ticks=sorted(merged['threads'].unique()),
+               labels=sorted(merged['threads'].unique()), rotation=45)
 
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(os.path.join(output_dir, 'strong_scaling_execution_time.png'), bbox_inches='tight')
@@ -118,8 +118,8 @@ def plot_strong_scaling(df, output_dir):
 
     # Plot Speedup vs Number of Threads
     plt.figure(figsize=(10, 6))
-    for func_name in best_parallel['func_name'].unique():
-        subset = best_parallel[best_parallel['func_name'] == func_name]
+    for func_name in merged['func_name'].unique():
+        subset = merged[merged['func_name'] == func_name]
         plt.plot(subset['threads'], subset['speedup'], marker='o', label=func_name)
 
     plt.xscale('log', base=2)
@@ -128,16 +128,16 @@ def plot_strong_scaling(df, output_dir):
     plt.title(f'Strong Scaling Speedup for Matrix Dimension {fixed_matrix_size}')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
-    plt.xticks(ticks=sorted(best_parallel['threads'].unique()),
-               labels=sorted(best_parallel['threads'].unique()), rotation=45)
+    plt.xticks(ticks=sorted(merged['threads'].unique()),
+               labels=sorted(merged['threads'].unique()), rotation=45)
 
     plt.savefig(os.path.join(output_dir, 'strong_scaling_speedup.png'), bbox_inches='tight')
     plt.close()
 
     # Plot Efficiency vs Number of Threads
     plt.figure(figsize=(10, 6))
-    for func_name in best_parallel['func_name'].unique():
-        subset = best_parallel[best_parallel['func_name'] == func_name]
+    for func_name in merged['func_name'].unique():
+        subset = merged[merged['func_name'] == func_name]
         plt.plot(subset['threads'], subset['efficiency'], marker='o', label=func_name)
 
     plt.xscale('log', base=2)
@@ -146,8 +146,8 @@ def plot_strong_scaling(df, output_dir):
     plt.title(f'Strong Scaling Efficiency for Matrix Dimension {fixed_matrix_size}')
     plt.legend()
     plt.grid(True, which="both", ls="--", linewidth=0.5)
-    plt.xticks(ticks=sorted(best_parallel['threads'].unique()),
-               labels=sorted(best_parallel['threads'].unique()), rotation=45)
+    plt.xticks(ticks=sorted(merged['threads'].unique()),
+               labels=sorted(merged['threads'].unique()), rotation=45)
 
     plt.savefig(os.path.join(output_dir, 'strong_scaling_efficiency.png'), bbox_inches='tight')
     plt.close()
@@ -186,21 +186,8 @@ def plot_weak_scaling(df, output_dir):
         print("No parallel implementations found for weak scaling analysis.")
         return
 
-    # Get the best runtime for each function and thread count
-    idx = parallel_df.groupby(['func_name', 'threads'])['time'].idxmin()
-    best_parallel = parallel_df.loc[idx].reset_index(drop=True)
-
-    # Get the baseline sequential runtime for speedup and scalability calculations
-    # Assuming threads=1 corresponds to the baseline
-    base_seq = df_sorted[(df_sorted['threads'] == 1) & (df_sorted['func_name'] == 'transpose_sequential')]
-    if base_seq.empty:
-        print("No sequential runtime found for weak scaling analysis.")
-        return
-    base_sequential_time = base_seq['time'].min()
-
-    # Calculate speedup and scalability
-    best_parallel['speedup'] = base_sequential_time / best_parallel['time']
-    best_parallel['scalability'] = best_parallel['speedup'] / best_parallel['threads']
+    # Aggregate execution time by function and threads (mean)
+    best_parallel = parallel_df.groupby(['func_name', 'threads'])['time'].mean().reset_index()
 
     # Plot Execution Time vs Number of Threads
     plt.figure(figsize=(10, 6))
@@ -222,41 +209,15 @@ def plot_weak_scaling(df, output_dir):
     plt.savefig(os.path.join(output_dir, 'weak_scaling_execution_time.png'), bbox_inches='tight')
     plt.close()
 
-    # Plot Speedup vs Number of Threads
-    plt.figure(figsize=(10, 6))
-    for func_name in best_parallel['func_name'].unique():
-        subset = best_parallel[best_parallel['func_name'] == func_name]
-        plt.plot(subset['threads'], subset['speedup'], marker='o', label=func_name)
+def plot_weak_scaling_additional_metrics(df, output_dir):
+    """
+    Plots additional metrics (speedup and scalability) for weak scaling.
 
-    plt.xscale('log', base=2)
-    plt.xlabel('Number of Threads (log scale)')
-    plt.ylabel('Speedup')
-    plt.title('Weak Scaling Speedup')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", linewidth=0.5)
-    plt.xticks(ticks=sorted(best_parallel['threads'].unique()),
-               labels=sorted(best_parallel['threads'].unique()), rotation=45)
-
-    plt.savefig(os.path.join(output_dir, 'weak_scaling_speedup.png'), bbox_inches='tight')
-    plt.close()
-
-    # Plot Scalability vs Number of Threads
-    plt.figure(figsize=(10, 6))
-    for func_name in best_parallel['func_name'].unique():
-        subset = best_parallel[best_parallel['func_name'] == func_name]
-        plt.plot(subset['threads'], subset['scalability'], marker='o', label=func_name)
-
-    plt.xscale('log', base=2)
-    plt.xlabel('Number of Threads (log scale)')
-    plt.ylabel('Scalability')
-    plt.title('Weak Scaling Scalability')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", linewidth=0.5)
-    plt.xticks(ticks=sorted(best_parallel['threads'].unique()),
-               labels=sorted(best_parallel['threads'].unique()), rotation=45)
-
-    plt.savefig(os.path.join(output_dir, 'weak_scaling_scalability.png'), bbox_inches='tight')
-    plt.close()
+    Note: Weak scaling speedup and scalability metrics are not standard and can be misleading.
+    It's recommended to focus on execution time for weak scaling.
+    """
+    # Weak scaling speedup and scalability are not meaningful; hence, we skip these plots.
+    print("Weak scaling speedup and scalability plots are not generated as they are not meaningful metrics.")
 
 def plot_2d_execution_time(df, output_dir):
     """
@@ -389,19 +350,16 @@ def plot_additional_metrics(df, output_dir):
     for func in parallel_funcs:
         subset = df[df['func_name'] == func]
 
-        # Aggregate data by threads to compute efficiency
-        aggregated = subset.groupby('threads').agg({'time': 'mean'}).reset_index()
-
-        # Get the sequential time corresponding to threads=1
-        seq_time_series = df[(df['func_name'] == 'transpose_sequential') &
-                             (df['threads'] == 1)]
-        if seq_time_series.empty:
-            print(f"No sequential time found for function {func} with threads=1. Skipping efficiency plot.")
+        # Use parallel implementation with threads=1 as the baseline
+        baseline_df = subset[subset['threads'] == 1]
+        if baseline_df.empty:
+            print(f"No baseline (threads=1) found for function {func}. Skipping efficiency plot.")
             continue
-        seq_time = seq_time_series['time'].min()
+        baseline_time = baseline_df['time'].min()
 
-        # Calculate speedup and efficiency
-        aggregated['speedup'] = seq_time / aggregated['time']
+        # Aggregate data by threads to compute speedup and efficiency
+        aggregated = subset.groupby('threads')['time'].min().reset_index()
+        aggregated['speedup'] = baseline_time / aggregated['time']
         aggregated['efficiency'] = aggregated['speedup'] / aggregated['threads']
 
         # Plot Efficiency vs Number of Threads
@@ -461,6 +419,9 @@ def main():
 
     # Plot Weak Scaling
     plot_weak_scaling(df, weak_scaling_dir)
+
+    # Note: Weak scaling speedup and scalability metrics are not meaningful and hence are not plotted
+    # plot_weak_scaling_additional_metrics(df, weak_scaling_dir)
 
     # Plot Additional Metrics (Efficiency)
     plot_additional_metrics(df, additional_metrics_dir)
