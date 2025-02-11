@@ -51,7 +51,15 @@ PARCO/
 - **include/**: Contains all the header files defining interfaces for various modules.
 - **src/**: Holds the source `.c` files implementing the functionalities declared in the headers.
 - **Makefile**: Automates the build process, handling compilation and linking.
+- **create_venv.sh**: Shell script to create a virtual environment and install python dependencies.
 - **parser.py**: Python script for parsing benchmark results and generating visualizations.
+- **start.pbs**: PBS script for running the benchmark on the Unitn HPC cluster.
+
+## Toolchain (Unitn HPC Cluster)
+- **Compiler**: GCC 9.1.0
+- **MPI**: MPICH 3.2.1
+- **GNU Make**: 3.82
+- **Python**: ```TODO```
 
 ## Installation
 
@@ -60,14 +68,6 @@ PARCO/
    ```bash
    git clone https://github.com/iwannabeacookie/PARCO-D1
    cd PARCO-D1
-   ```
-
-2. **Verify GCC Installation**
-
-   Installation will attempt to use 'gcc' as a compiler, unless gcc-9.1.0 is available. In case of issues, verify the GCC version:
-
-   ```bash
-   gcc --version
    ```
 
 ## Running on the Unitn HPC Cluster
@@ -148,13 +148,13 @@ make clean
 The project can be configured via command-line arguments that are parsed in `main.c` using the `init_config` function. Key configurable parameters include:
 
 - **Matrix Dimensions**: Define the range from `MIN_MATRIX_DIMENSION` to `MAX_MATRIX_DIMENSION`, doubling each iteration.
-- **OpenMP Threads**: Set the range from `MIN_OMP_THREADS` to `MAX_OMP_THREADS`.
+- **Threads**: Set the range from `MIN_OMP_THREADS` to `MAX_OMP_THREADS`. Used both for OMP and MPI (cast as processes).
 - **Block Size**: Specify the range for `BLOCK_SIZE`, doubling each iteration.
 - **Verbosity Level**: Control the level of detail in the program's output.
 
 ### Running the Benchmark
 
-After building the project, execute the benchmark as follows:
+**OpenMP** | After building the project, execute the benchmark as follows:
 
 ```bash
 ./bin/out [OPTIONS]
@@ -164,6 +164,12 @@ Use the '--help' flag to view the available options:
 
 ```bash
 ./bin/out --help
+```
+
+**MPI** | To run the MPI version, use the following command:
+
+```bash
+mpirun ./bin/out [OPTIONS]
 ```
 
 **Example:**
