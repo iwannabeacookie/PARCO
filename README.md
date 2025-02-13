@@ -101,7 +101,16 @@ PARCO/
    ```bash
    qsub -I -l select=1:ncpus=4:mpiprocs=4:mem=1gb
    ```
-2. **Proceed with the next subsection**
+
+2. **Load the required modules**
+
+   ```bash
+    module load gcc91
+    module load mpich-3.2.1--gcc-9.1.0
+    module load python-3.10.14
+   ```
+
+3. **Proceed with the next subsection**
 
 ## Building the Project
 
