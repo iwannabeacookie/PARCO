@@ -59,7 +59,7 @@ PARCO/
 - **Compiler**: GCC 9.1.0
 - **MPI**: MPICH 3.2.1
 - **GNU Make**: 3.82
-- **Python**: ```TODO```
+- **Python**: 3.10.14 + deps
 
 ## Installation
 
